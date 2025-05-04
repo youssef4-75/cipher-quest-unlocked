@@ -9,7 +9,8 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { HelpCircle, Info } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { HelpCircle, Info, Grab } from "lucide-react";
 
 // Mock game data
 const games = {
@@ -19,6 +20,7 @@ const games = {
     energyCost: 10,
     maxAttempts: 3,
     difficulty: "Easy",
+    detailedDescription: "This game challenges your ability to decode and rearrange hidden messages. Pay close attention to the numbers in parentheses, as they indicate the order of words in the final password. Solving this puzzle will lead you to a hidden location that contains valuable information about the next challenge.",
     phases: [
       {
         description: "Find the parts of a secret password that will unlock the next clue. Arrange them in the correct order.",
@@ -56,6 +58,7 @@ const games = {
     energyCost: 15,
     maxAttempts: 3,
     difficulty: "Medium",
+    detailedDescription: "In Crypto Conundrum, you'll face increasingly complex cryptographic puzzles that require both logical thinking and creativity. Each phase presents clues about everyday items arranged in specific combinations. You'll need to identify the objects and arrange them correctly to form the password.",
     phases: [
       {
         description: "This puzzle involves breakfast items. Think about what goes together in the morning.",
@@ -96,6 +99,9 @@ const GamePlay = () => {
   const [draggedMsg, setDraggedMsg] = useState<number | null>(null);
   const [msgPositions, setMsgPositions] = useState<{[key: number]: {top: number, left: number}}>();
   const [revealedHint, setRevealedHint] = useState<string | null>(null);
+  const [infoDialogOpen, setInfoDialogOpen] = useState(true);
+  const [similarityScore, setSimilarityScore] = useState<number | null>(null);
+  const [incorrectAttempts, setIncorrectAttempts] = useState<string[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartPos = useRef({x: 0, y: 0});
@@ -105,9 +111,6 @@ const GamePlay = () => {
     if (gameId && (gameId in games)) {
       const selectedGame = games[gameId as keyof typeof games];
       setGame(selectedGame);
-      
-      // Consume energy
-      updateEnergy(-selectedGame.energyCost);
       
       // Initialize message positions from game data
       const initialPositions: {[key: number]: {top: number, left: number}} = {};
@@ -125,70 +128,116 @@ const GamePlay = () => {
     }
   }, [gameId]);
 
-  const handleDragStart = (e: React.MouseEvent | React.TouchEvent, msgId: number) => {
+  // Start the game and consume energy when dialog is closed
+  const startGame = () => {
+    if (!game) return;
+    
+    // Consume energy
+    updateEnergy(-game.energyCost);
+    setInfoDialogOpen(false);
+  };
+
+  const handleDragStart = (e: React.MouseEvent, msgId: number) => {
     e.preventDefault();
     setDraggedMsg(msgId);
     
-    let clientX, clientY;
+    // Get mouse position
+    const clientX = e.clientX;
+    const clientY = e.clientY;
     
-    if ("touches" in e) {
-      // Touch event
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      // Mouse event
-      clientX = e.clientX;
-      clientY = e.clientY;
+    // Set position directly to mouse position
+    if (containerRef.current && msgPositions) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      
+      // Calculate position as percentage of container
+      const newTop = ((clientY - containerRect.top) / containerRect.height) * 100;
+      const newLeft = ((clientX - containerRect.left) / containerRect.width) * 100;
+      
+      // Update position
+      setMsgPositions(prev => ({
+        ...prev,
+        [msgId]: { top: Math.max(0, Math.min(90, newTop)), left: Math.max(0, Math.min(90, newLeft)) }
+      }));
     }
-    
-    dragStartPos.current = { x: clientX, y: clientY };
     
     document.addEventListener("mousemove", handleDrag);
     document.addEventListener("mouseup", handleDragEnd);
-    document.addEventListener("touchmove", handleDrag);
-    document.addEventListener("touchend", handleDragEnd);
   };
 
-  const handleDrag = (e: MouseEvent | TouchEvent) => {
-    if (draggedMsg === null || !msgPositions || !containerRef.current) return;
+  const handleDrag = (e: MouseEvent) => {
+    if (draggedMsg === null || !containerRef.current) return;
     
-    let clientX, clientY;
+    // Get mouse position
+    const clientX = e.clientX;
+    const clientY = e.clientY;
     
-    if ("touches" in e) {
-      // Touch event
-      e.preventDefault();
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      // Mouse event
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-    
-    const deltaX = clientX - dragStartPos.current.x;
-    const deltaY = clientY - dragStartPos.current.y;
-    
+    // Set position directly to mouse position
     const containerRect = containerRef.current.getBoundingClientRect();
-    const oldPos = msgPositions[draggedMsg];
     
-    // Calculate new position as percentage of container
-    const newTop = Math.max(0, Math.min(90, oldPos.top + (deltaY / containerRect.height) * 100));
-    const newLeft = Math.max(0, Math.min(90, oldPos.left + (deltaX / containerRect.width) * 100));
+    // Calculate position as percentage of container
+    const newTop = ((clientY - containerRect.top) / containerRect.height) * 100;
+    const newLeft = ((clientX - containerRect.left) / containerRect.width) * 100;
     
+    // Update position
     setMsgPositions(prev => ({
       ...prev,
-      [draggedMsg]: { top: newTop, left: newLeft }
+      [draggedMsg]: { top: Math.max(0, Math.min(90, newTop)), left: Math.max(0, Math.min(90, newLeft)) }
     }));
-    
-    dragStartPos.current = { x: clientX, y: clientY };
   };
 
   const handleDragEnd = () => {
     setDraggedMsg(null);
     document.removeEventListener("mousemove", handleDrag);
     document.removeEventListener("mouseup", handleDragEnd);
-    document.removeEventListener("touchmove", handleDrag);
-    document.removeEventListener("touchend", handleDragEnd);
+  };
+
+  // Calculate similarity between two strings
+  const calculateSimilarity = (inputPassword: string, correctPassword: string): number => {
+    let similarity = 0;
+    const inputLower = inputPassword.toLowerCase();
+    const correctLower = correctPassword.toLowerCase();
+    
+    // Check each character in input password
+    for (let i = 0; i < inputLower.length; i++) {
+      const char = inputLower[i];
+      
+      // Check if character exists in correct password
+      const correctIndex = correctLower.indexOf(char);
+      if (correctIndex !== -1) {
+        if (correctIndex === i) {
+          // Character is in correct position
+          similarity += correctLower.length;
+        } else {
+          // Character exists but in wrong position
+          similarity += correctLower.length - Math.abs(correctIndex - i);
+        }
+      }
+    }
+    
+    // Normalize score to percentage (0-100)
+    const maxPossibleScore = correctLower.length * correctLower.length;
+    return Math.round((similarity / maxPossibleScore) * 100);
+  };
+
+  // Highlight correct characters in the password
+  const highlightPassword = (attempt: string, correctPassword: string): JSX.Element => {
+    const result: JSX.Element[] = [];
+    const attemptLower = attempt.toLowerCase();
+    const correctLower = correctPassword.toLowerCase();
+    
+    for (let i = 0; i < attemptLower.length; i++) {
+      const char = attemptLower[i];
+      
+      if (i < correctLower.length && char === correctLower[i]) {
+        // Character is in correct position
+        result.push(<span key={i} className="text-green-500 font-bold">{attempt[i]}</span>);
+      } else {
+        // Character is incorrect or in wrong position
+        result.push(<span key={i}>{attempt[i]}</span>);
+      }
+    }
+    
+    return <div className="flex">{result}</div>;
   };
 
   const handleSubmit = () => {
@@ -219,6 +268,8 @@ const GamePlay = () => {
         setCurrentPhase(prev => prev + 1);
         setPassword("");
         setRevealedHint(null);
+        setSimilarityScore(null);
+        setIncorrectAttempts([]);
         
         // Initialize positions for the next phase
         const nextInitialPositions: {[key: number]: {top: number, left: number}} = {};
@@ -230,6 +281,13 @@ const GamePlay = () => {
     } else {
       // Password is incorrect
       setAttempts(prev => prev + 1);
+      
+      // Calculate similarity score
+      const similarity = calculateSimilarity(password, correctPassword);
+      setSimilarityScore(similarity);
+      
+      // Save the incorrect attempt for highlighting
+      setIncorrectAttempts(prev => [...prev, password]);
       
       if (attempts + 1 >= game.maxAttempts) {
         // Game over
@@ -243,11 +301,14 @@ const GamePlay = () => {
       } else {
         toast({
           title: "Incorrect Password",
-          description: `Attempts remaining: ${game.maxAttempts - attempts - 1}`,
+          description: `Similarity: ${similarity}%. Attempts remaining: ${game.maxAttempts - attempts - 1}`,
           variant: "destructive",
         });
       }
     }
+    
+    // Clear input
+    setPassword("");
   };
 
   const resetGame = () => {
@@ -300,6 +361,42 @@ const GamePlay = () => {
 
   return (
     <Layout title={game.title}>
+      <Dialog open={infoDialogOpen} onOpenChange={setInfoDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">{game.title}</DialogTitle>
+            <DialogDescription className="text-foreground/80">
+              <div className="space-y-4 mt-2">
+                <p>{game.detailedDescription}</p>
+                <div className="grid grid-cols-2 gap-2 text-sm mt-4">
+                  <div>
+                    <span className="text-muted-foreground block">Difficulty:</span>
+                    <span className="font-medium">{game.difficulty}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block">Energy Cost:</span>
+                    <span className="font-medium">{game.energyCost}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block">Max Attempts:</span>
+                    <span className="font-medium">{game.maxAttempts} per phase</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block">Phases:</span>
+                    <span className="font-medium">{game.phases.length}</span>
+                  </div>
+                </div>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <Button onClick={startGame}>
+              Start Game
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <div className="flex justify-between items-center mb-3">
@@ -329,16 +426,16 @@ const GamePlay = () => {
               {game.phases[currentPhase].messages.map((message) => (
                 <div 
                   key={message.id}
-                  className="draggable-message"
+                  className="draggable-message flex items-center"
                   style={{
                     top: `${msgPositions?.[message.id]?.top || 0}%`,
                     left: `${msgPositions?.[message.id]?.left || 0}%`,
                     zIndex: draggedMsg === message.id ? 10 : 1,
-                    cursor: "move"
+                    cursor: "grab"
                   }}
                   onMouseDown={(e) => handleDragStart(e, message.id)}
-                  onTouchStart={(e) => handleDragStart(e, message.id)}
                 >
+                  <Grab className="h-4 w-4 mr-2 text-muted-foreground" />
                   {message.text}
                 </div>
               ))}
@@ -383,6 +480,27 @@ const GamePlay = () => {
                 Arrange the messages in the correct order and enter the password below.
                 Pay attention to the numbers in parentheses - they indicate the order.
               </div>
+              
+              {/* Similarity Score Display */}
+              {similarityScore !== null && (
+                <div className="mt-3 p-2 bg-secondary/30 rounded-md">
+                  <p className="text-sm font-medium">Similarity Score: {similarityScore}%</p>
+                </div>
+              )}
+              
+              {/* Last incorrect attempts with highlighting */}
+              {incorrectAttempts.length > 0 && game.maxAttempts - attempts <= 2 && (
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-muted-foreground">Previous attempts:</p>
+                  <div className="space-y-1">
+                    {incorrectAttempts.map((attempt, index) => (
+                      <div key={index} className="text-sm p-1 bg-secondary/20 rounded">
+                        {highlightPassword(attempt, game.phases[currentPhase].password)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Card>
             
             <div className="flex flex-col gap-4">
