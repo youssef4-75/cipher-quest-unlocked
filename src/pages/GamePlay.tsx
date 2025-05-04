@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useGame } from "@/App";
@@ -102,6 +101,7 @@ const GamePlay = () => {
   const [infoDialogOpen, setInfoDialogOpen] = useState(true);
   const [similarityScore, setSimilarityScore] = useState<number | null>(null);
   const [incorrectAttempts, setIncorrectAttempts] = useState<string[]>([]);
+  const [isMouseFollowing, setIsMouseFollowing] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartPos = useRef({x: 0, y: 0});
@@ -137,9 +137,60 @@ const GamePlay = () => {
     setInfoDialogOpen(false);
   };
 
+  // Handle mouse move event for following functionality
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isMouseFollowing || draggedMsg === null || !containerRef.current) return;
+      
+      // Get mouse position relative to container
+      const containerRect = containerRef.current.getBoundingClientRect();
+      
+      // Calculate position as percentage of container
+      const newTop = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+      const newLeft = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      
+      // Update position
+      setMsgPositions(prev => ({
+        ...prev,
+        [draggedMsg]: { 
+          top: Math.max(0, Math.min(90, newTop)), 
+          left: Math.max(0, Math.min(90, newLeft)) 
+        }
+      }));
+    };
+
+    // Handle mouse up event to disable following
+    const handleMouseUp = (e: MouseEvent) => {
+      if (e.button === 2) { // Right mouse button
+        setIsMouseFollowing(false);
+        setDraggedMsg(null);
+      }
+    };
+
+    // Add event listeners
+    if (isMouseFollowing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('contextmenu', (e) => {
+        if (isMouseFollowing) {
+          e.preventDefault();
+          setIsMouseFollowing(false);
+          setDraggedMsg(null);
+        }
+      });
+    }
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isMouseFollowing, draggedMsg]);
+
   const handleDragStart = (e: React.MouseEvent, msgId: number) => {
     e.preventDefault();
     setDraggedMsg(msgId);
+    setIsMouseFollowing(true);
     
     // Get mouse position
     const clientX = e.clientX;
@@ -159,36 +210,14 @@ const GamePlay = () => {
         [msgId]: { top: Math.max(0, Math.min(90, newTop)), left: Math.max(0, Math.min(90, newLeft)) }
       }));
     }
-    
-    document.addEventListener("mousemove", handleDrag);
-    document.addEventListener("mouseup", handleDragEnd);
   };
 
   const handleDrag = (e: MouseEvent) => {
-    if (draggedMsg === null || !containerRef.current) return;
-    
-    // Get mouse position
-    const clientX = e.clientX;
-    const clientY = e.clientY;
-    
-    // Set position directly to mouse position
-    const containerRect = containerRef.current.getBoundingClientRect();
-    
-    // Calculate position as percentage of container
-    const newTop = ((clientY - containerRect.top) / containerRect.height) * 100;
-    const newLeft = ((clientX - containerRect.left) / containerRect.width) * 100;
-    
-    // Update position
-    setMsgPositions(prev => ({
-      ...prev,
-      [draggedMsg]: { top: Math.max(0, Math.min(90, newTop)), left: Math.max(0, Math.min(90, newLeft)) }
-    }));
+    // This is now handled by the useEffect hook
   };
 
   const handleDragEnd = () => {
-    setDraggedMsg(null);
-    document.removeEventListener("mousemove", handleDrag);
-    document.removeEventListener("mouseup", handleDragEnd);
+    // This is now handled by the useEffect hook
   };
 
   // Calculate similarity between two strings
@@ -422,16 +451,17 @@ const GamePlay = () => {
               ref={containerRef}
               className="relative min-h-[50vh] cipher-card mb-6 p-2 touch-none"
               style={{ touchAction: "none" }}
+              onContextMenu={(e) => e.preventDefault()}
             >
               {game.phases[currentPhase].messages.map((message) => (
                 <div 
                   key={message.id}
-                  className="draggable-message flex items-center"
+                  className={`draggable-message flex items-center ${draggedMsg === message.id && isMouseFollowing ? 'pulse ring-2 ring-primary' : ''}`}
                   style={{
                     top: `${msgPositions?.[message.id]?.top || 0}%`,
                     left: `${msgPositions?.[message.id]?.left || 0}%`,
                     zIndex: draggedMsg === message.id ? 10 : 1,
-                    cursor: "grab"
+                    cursor: isMouseFollowing && draggedMsg === message.id ? "grabbing" : "grab"
                   }}
                   onMouseDown={(e) => handleDragStart(e, message.id)}
                 >

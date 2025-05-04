@@ -85,6 +85,21 @@
   .energy-bar {
     @apply h-2 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500;
   }
+  
+  /* New hacker-themed styles */
+  .cipher-terminal {
+    @apply font-mono text-sm;
+    text-shadow: 0 0 5px rgba(155, 135, 245, 0.5);
+  }
+  
+  .matrix-code {
+    @apply grid grid-cols-1 gap-3 p-4;
+    letter-spacing: 2px;
+  }
+  
+  .pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }
 
 @keyframes glitch {
@@ -141,4 +156,30 @@
 
 .password-item {
   @apply font-mono text-sm bg-card border border-cipher-400/30 rounded p-2 break-all;
+}
+
+/* New animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(155, 135, 245, 0.7);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 4px rgba(155, 135, 245, 0.3);
+  }
+}
+
+@keyframes matrix-flow {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+.animate-matrix-flow {
+  animation: matrix-flow 15s linear infinite;
+  animation-delay: calc(var(--delay) * 1s);
 }
