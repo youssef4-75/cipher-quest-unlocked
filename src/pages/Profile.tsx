@@ -75,7 +75,7 @@ const Profile = () => {
             <CardContent className="space-y-4">
               <div className="cipher-terminal p-2 bg-cipher-900/50 rounded-md border border-cipher-400/30">
                 <p className="text-sm text-cipher-300 font-mono mb-1">$ identify user</p>
-                <p className="text-xs text-muted-foreground font-mono mb-2">> scanning biometrics...</p>
+                <p className="text-xs text-muted-foreground font-mono mb-2">{"> scanning biometrics..."}</p>
                 <p className="text-sm font-medium">{user?.name}</p>
               </div>
               

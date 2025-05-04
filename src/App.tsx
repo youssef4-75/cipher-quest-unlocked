@@ -62,9 +62,9 @@ const App = () => {
   const [user, setUser] = useState<User>(null);
   const [loading, setLoading] = useState(true);
   
-  // Game state
+  // Game state - Changed initial points from 0 to 100
   const [energy, setEnergy] = useState(100);
-  const [points, setPoints] = useState(0);
+  const [points, setPoints] = useState(100);
   const [solvedPasswords, setSolvedPasswords] = useState<string[]>([]);
 
   // Check for existing session on mount

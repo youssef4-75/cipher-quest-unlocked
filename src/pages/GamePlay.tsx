@@ -104,7 +104,6 @@ const GamePlay = () => {
   const [isMouseFollowing, setIsMouseFollowing] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const dragStartPos = useRef({x: 0, y: 0});
 
   useEffect(() => {
     // Get game data
@@ -137,7 +136,7 @@ const GamePlay = () => {
     setInfoDialogOpen(false);
   };
 
-  // Handle mouse move event for following functionality
+  // Handle mouse move event for following functionality - Enhanced to directly follow mouse
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isMouseFollowing || draggedMsg === null || !containerRef.current) return;
@@ -149,7 +148,7 @@ const GamePlay = () => {
       const newTop = ((e.clientY - containerRect.top) / containerRect.height) * 100;
       const newLeft = ((e.clientX - containerRect.left) / containerRect.width) * 100;
       
-      // Update position
+      // Update position - Top left of message positioned at mouse cursor
       setMsgPositions(prev => ({
         ...prev,
         [draggedMsg]: { 
@@ -159,7 +158,7 @@ const GamePlay = () => {
       }));
     };
 
-    // Handle mouse up event to disable following
+    // Handle mouse up event to disable following - Listen for right click specifically
     const handleMouseUp = (e: MouseEvent) => {
       if (e.button === 2) { // Right mouse button
         setIsMouseFollowing(false);
@@ -196,7 +195,7 @@ const GamePlay = () => {
     const clientX = e.clientX;
     const clientY = e.clientY;
     
-    // Set position directly to mouse position
+    // Set position directly to mouse position immediately
     if (containerRef.current && msgPositions) {
       const containerRect = containerRef.current.getBoundingClientRect();
       
@@ -204,20 +203,15 @@ const GamePlay = () => {
       const newTop = ((clientY - containerRect.top) / containerRect.height) * 100;
       const newLeft = ((clientX - containerRect.left) / containerRect.width) * 100;
       
-      // Update position
+      // Update position - Make top left of message follow mouse cursor exactly
       setMsgPositions(prev => ({
         ...prev,
-        [msgId]: { top: Math.max(0, Math.min(90, newTop)), left: Math.max(0, Math.min(90, newLeft)) }
+        [msgId]: { 
+          top: Math.max(0, Math.min(90, newTop)), 
+          left: Math.max(0, Math.min(90, newLeft)) 
+        }
       }));
     }
-  };
-
-  const handleDrag = (e: MouseEvent) => {
-    // This is now handled by the useEffect hook
-  };
-
-  const handleDragEnd = () => {
-    // This is now handled by the useEffect hook
   };
 
   // Calculate similarity between two strings

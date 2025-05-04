@@ -86,7 +86,7 @@
     @apply h-2 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500;
   }
   
-  /* New hacker-themed styles */
+  /* Enhanced hacker-themed styles */
   .cipher-terminal {
     @apply font-mono text-sm;
     text-shadow: 0 0 5px rgba(155, 135, 245, 0.5);
@@ -99,6 +99,31 @@
   
   .pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* New hacker-themed decorative elements */
+  .circuit-line {
+    @apply absolute h-px bg-gradient-to-r from-transparent via-cipher-300/30 to-transparent;
+    animation: circuit-pulse 3s infinite alternate;
+  }
+
+  .data-node {
+    @apply absolute w-2 h-2 rounded-full bg-cipher-300/50;
+    box-shadow: 0 0 8px 2px rgba(155, 135, 245, 0.3);
+    animation: node-pulse 2s infinite alternate;
+  }
+
+  .hacker-badge {
+    @apply relative bg-gradient-to-br from-cipher-900 to-cipher-500/20 border border-cipher-300/20 rounded-md p-2 inline-flex items-center gap-2 text-xs;
+    text-shadow: 0 0 5px rgba(155, 135, 245, 0.5);
+  }
+
+  .hex-grid {
+    @apply absolute opacity-10 w-full h-full;
+    background-image: 
+      linear-gradient(to right, rgba(155, 135, 245, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(155, 135, 245, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 }
 
@@ -158,7 +183,7 @@
   @apply font-mono text-sm bg-card border border-cipher-400/30 rounded p-2 break-all;
 }
 
-/* New animations */
+/* Enhanced animations */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -179,7 +204,63 @@
   }
 }
 
+@keyframes circuit-pulse {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes node-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+@keyframes data-stream {
+  0% {
+    transform: translateY(-5px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(5px);
+    opacity: 0;
+  }
+}
+
 .animate-matrix-flow {
   animation: matrix-flow 15s linear infinite;
   animation-delay: calc(var(--delay) * 1s);
+}
+
+.animate-matrix-bg {
+  animation: matrix-bg 30s linear infinite;
+}
+
+.animate-circuit-pulse {
+  animation: circuit-pulse 3s infinite alternate;
+}
+
+.animate-node-pulse {
+  animation: node-pulse 2s infinite alternate;
+}
+
+.animate-data-stream {
+  animation: data-stream 2s linear infinite;
+}
+
+/* Enhanced hacker-theme */
+.hacker-grid {
+  background-image: radial-gradient(rgba(155, 135, 245, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
