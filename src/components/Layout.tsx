@@ -5,7 +5,7 @@ import { useAuth } from "@/App";
 import { useToast } from "@/hooks/use-toast";
 import { useGame } from "@/App";
 import { Button } from "@/components/ui/button";
-import { Trophy, User, Home, LogOut, Zap } from "lucide-react";
+import { Trophy, User, Home, LogOut, Zap, ShoppingBag } from "lucide-react";
 
 type LayoutProps = {
   children: ReactNode;
@@ -66,6 +66,12 @@ const Layout = ({ children, title = "Cipher Quest" }: LayoutProps) => {
                   <Button variant="ghost" size="sm">
                     <Home className="h-4 w-4 mr-2" />
                     <span className="hidden sm:inline">Home</span>
+                  </Button>
+                </Link>
+                <Link to="/store">
+                  <Button variant="ghost" size="sm">
+                    <ShoppingBag className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Store</span>
                   </Button>
                 </Link>
                 <Link to="/profile">

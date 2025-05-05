@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
 import GamePlay from "./pages/GamePlay";
+import Store from "./pages/Store";
 
 // Auth context
 type User = {
@@ -214,6 +214,7 @@ const App = () => {
                 <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
                 <Route path="/leaderboard" element={user ? <Leaderboard /> : <Navigate to="/login" />} />
                 <Route path="/gameplay/:gameId" element={user ? <GamePlay /> : <Navigate to="/login" />} />
+                <Route path="/store" element={user ? <Store /> : <Navigate to="/login" />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
