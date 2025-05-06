@@ -1,0 +1,51 @@
+import { games } from "@/server/database/games_data";
+import { users } from "@/server/database/player_data";
+
+// ------------------------------------------------------------------------------------------------------
+
+export function getGames(gameId: string, user_auth: string) {
+    // backend logic here for getting the games from the database
+
+    const phase = users[user_auth].currentGame[1] || 0;
+    if (gameId && (gameId in games)) {
+        const { length, title, description, energyCost,
+            maxAttempts, difficulty, detailedDescription, phases } = games[gameId];
+        
+        const {password, ...rest} = phases[phase];
+        return {
+            phase: rest,
+            length: length,
+            title: title,
+            description: description,
+            energyCost: energyCost,
+            maxAttempts: maxAttempts,
+            difficulty: difficulty,
+            detailedDescription: detailedDescription
+        };
+    }
+    return null;
+}
+
+
+
+export function generateHint(gameId: string, user_auth: string) {
+
+    const phase = users[user_auth].currentGame[1] || 0;
+    if (gameId && (gameId in games)) {
+        const { length, title, description, energyCost,
+            maxAttempts, difficulty, detailedDescription, phases } = games[gameId];
+
+        const { password, ...rest } = phases[phase];
+        return {
+            phase: rest,
+            length: length,
+            title: title,
+            description: description,
+            energyCost: energyCost,
+            maxAttempts: maxAttempts,
+            difficulty: difficulty,
+            detailedDescription: detailedDescription
+        };
+    }
+    return null;
+}

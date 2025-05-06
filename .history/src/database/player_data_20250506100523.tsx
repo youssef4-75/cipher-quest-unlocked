@@ -1,0 +1,1 @@
+// a page to simulate the data of a player 
