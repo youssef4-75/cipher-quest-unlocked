@@ -50,7 +50,6 @@ const Store = () => {
   const { points, updatePoints } = useGame();
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState<ItemCategory>("powerUps");
-
   // Store items data
   const storeItems: StoreItem[] = [
     // Power-Ups
@@ -74,7 +73,6 @@ const Store = () => {
       isPermanent: false,
       effect: "+3 attempts on any puzzle"
     },
-
     // Cosmetics
     {
       id: "dark-theme",
@@ -94,7 +92,6 @@ const Store = () => {
       category: "cosmetics",
       isPermanent: true
     },
-
     // Energy & Boosts
     {
       id: "energy-refill",
@@ -116,7 +113,6 @@ const Store = () => {
       isPermanent: false,
       effect: "2x energy regen for 1 hour"
     },
-
     // Special Abilities
     {
       id: "password-reveal",
@@ -148,14 +144,12 @@ const Store = () => {
     if (points >= item.price) {
       // Deduct points
       updatePoints(-item.price);
-
       // Show success message
       toast({
         title: "Purchase Successful!",
         description: `You bought ${item.name}`,
         variant: "default",
       });
-
       // In a real app, we would update the user's inventory here
     } else {
       // Show error message
@@ -166,7 +160,6 @@ const Store = () => {
       });
     }
   };
-
   return (
     <Layout title="Store">
       <div className="max-w-6xl mx-auto">
@@ -184,7 +177,6 @@ const Store = () => {
             <span>Earn More</span>
           </Button>
         </div>
-
         {/* Store categories */}
         <Tabs defaultValue="powerUps" className="w-full" onValueChange={(value) => setSelectedTab(value as ItemCategory)}>
           <TabsList className="grid w-full grid-cols-4 mb-8">
@@ -205,12 +197,12 @@ const Store = () => {
               <span className="hidden sm:inline">Special</span>
             </TabsTrigger>
           </TabsList>
-
           {/* Items grid */}
           {["powerUps", "cosmetics", "energy", "special"].map((category) => (
             <TabsContent value={category} key={category} className="mt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredItems.map((item) => (
+
                   <StoreItemCard
                     key={item.id}
                     item={item}
@@ -226,5 +218,6 @@ const Store = () => {
     </Layout>
   );
 };
+
 
 export default Store;

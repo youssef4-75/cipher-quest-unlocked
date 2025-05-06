@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,9 +13,11 @@ import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
 import GamePlay from "./pages/GamePlay";
 import Store from "./pages/Store";
+ 
 import { loginUser, registerUser } from "./server/logic/user";
 import { AuthContextType, GameContextType, User } from "./types";
 import { AuthContext, GameContext, useGame as ug } from "./context";
+ 
 
 
 
