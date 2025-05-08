@@ -123,7 +123,7 @@ export function getGames(gameId: string, user_auth: string): PartialGame {
     const phaseIndex = user.currentGame[1] || 0;
     if (validGameId(gameId)) {
         const { length, title, description, energyCost,
-            maxAttempts, difficulty, detailedDescription, phases } = getGame(gameId);
+            maxAttempts, difficulty, detailedDescription, phases, timeLimit } = getGame(gameId);
         if (phaseIndex >= length) {
             return null;
         }
@@ -133,6 +133,7 @@ export function getGames(gameId: string, user_auth: string): PartialGame {
         return {
             phase,
             length,
+            timeLimit,
             title,
             description,
             energyCost,

@@ -55,6 +55,7 @@ export type ViewGame = {
   description: string;
   energyCost: number;
   maxAttempts: number;
+  timeLimit: number;
   length: number;
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Expert' | 'Varies';
   detailedDescription: string;

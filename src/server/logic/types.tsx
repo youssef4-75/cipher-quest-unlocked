@@ -20,6 +20,7 @@ export type User = {
 // Game context
 export type Game = {
     title: string;
+    timeLimit: number;
     isDaily: boolean;
     theme: string;
     image: string;
@@ -55,6 +56,7 @@ export type PartialGame = {
     description: string;
     energyCost: number;
     maxAttempts: number;
+    timeLimit: number;
     length: number;
     difficulty: 'Easy' | 'Medium' | 'Hard' | 'Expert' | 'Varies';
     detailedDescription: string;

@@ -26,6 +26,7 @@ const GamePlay = () => {
 
 
   const [game, setGame] = useState<ViewGame>(null);
+  const [timer, setTimer] = useState<number>(0);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [password, setPassword] = useState("");
@@ -44,12 +45,17 @@ const GamePlay = () => {
 
 
   useEffect(() => {
+
+
+
     // Get game data
-    // const selectedGame = getGames(gameId, id);
     const selectedGame: ViewGame = getGames(gameId, id);
+
 
     if (selectedGame !== null) {
       setGame(selectedGame);
+
+
 
       // Initialize message positions from game data
       const initialPositions: { [key: number]: { top: number, left: number } } = {};
@@ -182,7 +188,6 @@ const GamePlay = () => {
 
     const { state, res } = submitAnswer(id, password, revealedHint);
 
-    console.log({state, res});
     if (["win", "next"].includes(state)) {
       // Password is correct
       setCurrentPhase(prev => prev + 1);
@@ -206,6 +211,7 @@ const GamePlay = () => {
           description: "Moving to next phase...",
         });
 
+        setTimer(0);
         setGame(getGames(gameId, id));
 
         setPassword("");
@@ -278,6 +284,39 @@ const GamePlay = () => {
     });
   };
 
+  // Add timer effect
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (gameStatus === "playing" && !infoDialogOpen) {
+      intervalId = setInterval(() => {
+        setTimer(prev => prev + 1);
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [gameStatus, infoDialogOpen]);
+
+  // Format timer display
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  // Get progress bar color based on remaining time
+  const getProgressColor = (remainingTime: number, totalTime: number) => {
+    const percentage = (remainingTime / totalTime) * 100;
+    if (percentage <= 30) {
+      return "bg-red-500";
+    }
+    return "bg-green-500";
+  };
+
   if (!game) {
 
     return (
@@ -288,6 +327,7 @@ const GamePlay = () => {
       </Layout>
     );
   }
+
 
   return (
     <Layout title={game.title}>
@@ -339,10 +379,14 @@ const GamePlay = () => {
               <h3 className="font-medium">{game.maxAttempts - attempts} remaining</h3>
             </div>
             <div>
-              <span className="text-sm text-muted-foreground">Points</span>
-              <h3 className="font-medium">{points}</h3>
+              <span className="text-sm text-muted-foreground">Time</span>
+              <h3 className="font-medium">{formatTime(game.timeLimit - timer)}</h3>
             </div>
           </div>
+          <Progress
+            value={((game.timeLimit - timer) / game.timeLimit) * 100}
+            className={`h-2 mb-3 ${getProgressColor(game.timeLimit - timer, game.timeLimit)}`}
+          />
           <Progress value={(currentPhase / game.length) * 100} className="h-2" />
         </div>
 
