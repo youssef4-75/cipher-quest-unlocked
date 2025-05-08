@@ -7,22 +7,23 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Zap } from "lucide-react";
-import { getAvailableGames, notifyEntry } from '@/connection/dashboard'
+import { getAvailableGames, notifyEntry } from '@/server/connection/dashboard'
+
 // Mock game data
-const availableGames = getAvailableGames();
 
 const Dashboard = () => {
   const { energy, updateEnergy } = useGame();
   const { toast } = useToast();
   const [filter, setFilter] = useState("all");
-  const {user: {id}} = useAuth();
+  const { user: { id } } = useAuth();
+  const availableGames = getAvailableGames(id);
 
 
-  const filteredGames = filter === "all" 
-    ? availableGames 
-    : filter === "daily" 
-    ? availableGames.filter(game => game.isDaily) 
-    : availableGames.filter(game => game.difficulty.toLowerCase() === filter.toLowerCase());
+  const filteredGames = filter === "all"
+    ? availableGames
+    : filter === "daily"
+      ? availableGames.filter(game => game.isDaily)
+      : availableGames.filter(game => game.difficulty.toLowerCase() === filter.toLowerCase());
 
   const handleGameStart = (gameId: string, energyCost: number) => {
     const res = notifyEntry(gameId, id);
@@ -34,50 +35,54 @@ const Dashboard = () => {
       });
       return;
     }
-    
+
     updateEnergy(-energyCost);
   };
+
 
   return (
     <Layout title="Game Selection">
       <div className="mb-8 flex flex-wrap gap-3">
-        <Button 
+        <Button
           onClick={() => setFilter("all")}
           variant={filter === "all" ? "default" : "outline"}>
           All Games
         </Button>
-        <Button 
+        <Button
           onClick={() => setFilter("easy")}
           variant={filter === "easy" ? "default" : "outline"}>
           Easy
         </Button>
-        <Button 
+        <Button
           onClick={() => setFilter("medium")}
           variant={filter === "medium" ? "default" : "outline"}>
           Medium
         </Button>
-        <Button 
+        <Button
           onClick={() => setFilter("hard")}
           variant={filter === "hard" ? "default" : "outline"}>
           Hard
         </Button>
-        <Button 
+        <Button
           onClick={() => setFilter("daily")}
           variant={filter === "daily" ? "default" : "outline"}>
           Daily Challenges
         </Button>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredGames.map((game) => (
           <Card key={game.id} className="cipher-card overflow-hidden flex flex-col animate-fade-in">
             <div className="relative h-48 w-full overflow-hidden">
-              <img 
-                src={game.image} 
-                alt={game.title} 
+              <img
+                src={game.image}
+                alt={game.title}
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-3 right-3 bg-card/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
+                {game.theme}
+              </div>
+              <div className="absolute top-10 right-3 bg-card/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
                 {game.difficulty}
               </div>
               {game.isDaily && (
@@ -91,11 +96,11 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="p-5 flex-grow flex flex-col">
               <h3 className="font-bold text-xl mb-2">{game.title}</h3>
               <p className="text-sm text-muted-foreground mb-4 flex-grow">{game.description}</p>
-              
+
               <div className="grid grid-cols-3 gap-2 mb-4">
                 <div className="text-center p-2 bg-card rounded-md">
                   <div className="text-xs text-muted-foreground">Energy</div>
@@ -113,9 +118,9 @@ const Dashboard = () => {
                   <div className="font-medium">{game.phases}</div>
                 </div>
               </div>
-              
+
               <Link to={`/gameplay/${game.id}`} onClick={() => handleGameStart(game.id, game.energyCost)}>
-                <Button 
+                <Button
                   className="w-full"
                   disabled={energy < game.energyCost}
                 >

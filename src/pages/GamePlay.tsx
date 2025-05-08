@@ -10,7 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { HelpCircle, Info, Grab } from "lucide-react";
-import { generateHint, getGames, highlightPassword, submitAnswer } from '@/connection/game_play';
+import { generateHint, getGames, highlightPassword, submitAnswer } from '@/server/connection/game_play';
+import { ViewGame } from "@/types";
 
 
 
@@ -24,10 +25,11 @@ const GamePlay = () => {
   const navigate = useNavigate();
 
 
-  const [game, setGame] = useState<any>(null);
+  const [game, setGame] = useState<ViewGame>(null);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [password, setPassword] = useState("");
+  const [reward, setReward] = useState("");
   const [gameStatus, setGameStatus] = useState<"playing" | "won" | "lost">("playing");
   const [draggedMsg, setDraggedMsg] = useState<number | null>(null);
   const [msgPositions, setMsgPositions] = useState<{ [key: number]: { top: number, left: number } }>();
@@ -36,7 +38,7 @@ const GamePlay = () => {
   const [similarityScore, setSimilarityScore] = useState<number | null>(null);
   const [incorrectAttempts, setIncorrectAttempts] = useState<string[]>([]);
   const [isMouseFollowing, setIsMouseFollowing] = useState(false);
-  const {user: {id}} = useAuth();
+  const { user: { id } } = useAuth();
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -44,8 +46,7 @@ const GamePlay = () => {
   useEffect(() => {
     // Get game data
     // const selectedGame = getGames(gameId, id);
-    const selectedGame = getGames(gameId, id);
-    console.log(selectedGame)
+    const selectedGame: ViewGame = getGames(gameId, id);
 
     if (selectedGame !== null) {
       setGame(selectedGame);
@@ -178,19 +179,21 @@ const GamePlay = () => {
 
 
     if (!game) return;
-    const {state, res} = submitAnswer(id, password);
 
+    const { state, res } = submitAnswer(id, password, revealedHint);
 
+    console.log({state, res});
     if (["win", "next"].includes(state)) {
       // Password is correct
       setCurrentPhase(prev => prev + 1);
       if (state === 'win') {
-        
+
         // Game completed
         setGameStatus("won");
         updatePoints(game.difficulty === "Easy" ? 20 : game.difficulty === "Medium" ? 40 : 60);
-        const {finalPassword} = res;
+        const { finalPassword } = res;
         addSolvedPassword(finalPassword);
+        setReward(finalPassword);
 
         toast({
           title: "Game Completed!",
@@ -223,7 +226,7 @@ const GamePlay = () => {
       const { sim } = res;
 
       // Calculate similarity score
-      
+
       setSimilarityScore(sim);
 
       // Save the incorrect attempt for highlighting
@@ -239,6 +242,7 @@ const GamePlay = () => {
           variant: "destructive",
         });
       } else {
+        setRevealedHint(res.finalPassword);
         toast({
           title: "Incorrect Password",
           description: `Similarity: ${sim}%. Attempts remaining: ${game.maxAttempts - attempts - 1}`,
@@ -252,41 +256,11 @@ const GamePlay = () => {
   };
 
 
-  // // Highlight correct characters in the password
-  // const highlightPassword = (attempt: string, attemptIndex: number, correctPassword: string, maxAttempts: number): JSX.Element => {
-  
-  //     //if there are more than 2 attempts left, do nothing
-  //     let corr_color = ''
-  //     let fals_color = ''
-  //     if (attemptIndex + 2 >= maxAttempts) {
-  //         corr_color = 'green';
-  //         fals_color = 'red';
-  //     }
-  
-  //     const result: JSX.Element[] = [];
-  //     const attemptLower = attempt.toLowerCase();
-  //     const correctLower = correctPassword.toLowerCase();
-  
-  //     for (let i = 0; i < attemptLower.length; i++) {
-  //         const char = attemptLower[i];
-  
-  //         if (i < correctLower.length && char === correctLower[i]) {
-  //             // Character is in correct position
-  //             result.push(<span key={i} className={`text-` + corr_color + `-500 font-bold`}>{attempt[i]}</span>);
-  //         } else {
-  //             // Character is incorrect or in wrong position
-  //             result.push(<span className={`text-` + fals_color + `-500 font-bold`} key={i}>{attempt[i]}</span>);
-  //         }
-  //     }
-  
-  //     return <div className="flex">{result}</div>;
-  // };
-  
 
   const useHint = () => {
     if (!game) return;
-    const hintText = generateHint(gameId, id);
-    
+    const hintText = generateHint(gameId, id, revealedHint);
+
     if (hintText === null) {
       toast({
         title: "Not enough points",
@@ -315,37 +289,36 @@ const GamePlay = () => {
     );
   }
 
-
   return (
     <Layout title={game.title}>
       <Dialog open={infoDialogOpen} onOpenChange={setInfoDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">{game.title}</DialogTitle>
-            <DialogDescription className="text-foreground/80">
-              <div className="space-y-4 mt-2">
-                <p>{game.detailedDescription}</p>
-                <div className="grid grid-cols-2 gap-2 text-sm mt-4">
-                  <div>
-                    <span className="text-muted-foreground block">Difficulty:</span>
-                    <span className="font-medium">{game.difficulty}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block">Energy Cost:</span>
-                    <span className="font-medium">{game.energyCost}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block">Max Attempts:</span>
-                    <span className="font-medium">{game.maxAttempts} for all phases</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block">Phases:</span>
-                    <span className="font-medium">{game.length}</span>
-                  </div>
-                </div>
-              </div>
-            </DialogDescription>
+            <DialogDescription className="text-foreground/80">{game.detailedDescription}</DialogDescription>
           </DialogHeader>
+
+          <div className="space-y-4 mt-2">
+
+            <div className="grid grid-cols-2 gap-2 text-sm mt-4">
+              <div>
+                <span className="text-muted-foreground block">Difficulty:</span>
+                <span className="font-medium">{game.difficulty}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block">Energy Cost:</span>
+                <span className="font-medium">{game.energyCost}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block">Max Attempts:</span>
+                <span className="font-medium">{game.maxAttempts} for all phases</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block">Phases:</span>
+                <span className="font-medium">{game.length}</span>
+              </div>
+            </div>
+          </div>
           <DialogFooter className="sm:justify-center">
             <Button onClick={startGame}>
               Start Game
@@ -359,7 +332,7 @@ const GamePlay = () => {
           <div className="flex justify-between items-center mb-3">
             <div>
               <span className="text-sm text-muted-foreground">Phase</span>
-              <h3 className="font-medium">{currentPhase + 1} of {game.length}</h3>
+              <h3 className="font-medium">{Math.min(currentPhase + 1, game.length)} of {game.length}</h3>
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Attempts</span>
@@ -375,32 +348,6 @@ const GamePlay = () => {
 
         {gameStatus === "playing" ? (
           <>
-            <div
-              ref={containerRef}
-              className="relative min-h-[50vh] cipher-card mb-6 p-2 touch-none"
-              style={{ touchAction: "none" }}
-              onContextMenu={(e) => e.preventDefault()}
-              onClick={stopDragging}
-            >
-              {game.phase.messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`draggable-message flex items-center ${draggedMsg === message.id && isMouseFollowing ? 'pulse ring-2 ring-primary' : ''}`}
-                  style={{
-                    top: `${msgPositions?.[message.id]?.top || 0}%`,
-                    left: `${msgPositions?.[message.id]?.left || 0}%`,
-                    zIndex: draggedMsg === message.id ? 10 : 1,
-                    cursor: isMouseFollowing && draggedMsg === message.id ? "grabbing" : "grab"
-                  }}
-                  onMouseDown={(e) => handleDragStart(e, message.id)}
-                >
-                  <Grab className="h-4 w-4 mr-2 text-muted-foreground" />
-                  {message.text}
-                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-bold">{message.hash}</div>
-                </div>
-              ))}
-            </div>
-
             <Card className="p-4 mb-6 cipher-card">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
@@ -433,7 +380,7 @@ const GamePlay = () => {
               </p>
               {revealedHint && (
                 <div className="bg-secondary/50 p-2 rounded-md mb-2 text-sm">
-                  <span className="font-medium">Hint:</span> {revealedHint}
+                  <span className="font-medium">Hint:</span> The Password is{revealedHint}
                 </div>
               )}
               <div className="text-xs text-muted-foreground">
@@ -463,6 +410,34 @@ const GamePlay = () => {
               )}
             </Card>
 
+            <div
+              ref={containerRef}
+              className="relative min-h-[50vh] cipher-card mb-6 p-2 touch-none"
+              style={{ touchAction: "none" }}
+              onContextMenu={(e) => e.preventDefault()}
+              onClick={stopDragging}
+            >
+              {game.phase.messages.map((message) => (
+                <div
+                  key={message?.id}
+                  className={`draggable-message flex items-center ${draggedMsg === message?.id && isMouseFollowing ? 'pulse ring-2 ring-primary' : ''}`}
+                  style={{
+                    top: `${msgPositions?.[message?.id]?.top || 0}%`,
+                    left: `${msgPositions?.[message?.id]?.left || 0}%`,
+                    zIndex: draggedMsg === message?.id ? 10 : 1,
+                    cursor: isMouseFollowing && draggedMsg === message?.id ? "grabbing" : "grab"
+                  }}
+                  onMouseDown={(e) => handleDragStart(e, message?.id)}
+                >
+                  <Grab className="h-4 w-4 mr-2 text-muted-foreground" />
+                  {message?.text}
+                  <div className="flex items-center ml-3 justify-center w-9 h-9 rounded-full bg-purple-500 text-white text-xs font-bold">{message?.hash}</div>
+                </div>
+              ))}
+            </div>
+
+
+
             <div className="flex flex-col gap-4">
               <div className="flex gap-4">
                 <Input
@@ -471,13 +446,13 @@ const GamePlay = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="flex-grow bg-background border-input"
                 />
-                <Button onClick={e=>handleSubmit()}>Submit</Button>
+                <Button onClick={e => handleSubmit()}>Submit</Button>
               </div>
               <div className="flex justify-center">
                 <Button
                   variant="outline"
                   onClick={useHint}
-                  disabled={points < HINT_COST || revealedHint !== null}
+                  disabled={points < HINT_COST}
                   className="text-sm"
                 >
                   Use Hint ({HINT_COST} Points)
@@ -492,7 +467,7 @@ const GamePlay = () => {
               and completed <span className="text-green-500 font-bold glow-text">{game.title}</span>.
             </p>
             <p className="mb-6">
-              <span className="text-blue-500 font-bold glow-text">{game.finalPassword}</span>:
+              <span className="text-blue-500 font-bold glow-text">{reward}</span>:
               Achieved
             </p>
 

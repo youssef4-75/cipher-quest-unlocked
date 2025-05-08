@@ -9,6 +9,28 @@ export type User = {
     name: string;
 } | null;
 
+
+export type UserData = {
+  name: string;
+  auth_mail: string;
+  password: string;
+  winStreak: number;
+  level: number;
+  themes: Record<string, number>;
+  energy: number;
+  points: number;
+  collectedPwd: string[];
+  memberSince: string;
+  totalGamePlayed: number;
+  accomplishedMission: number;
+  succesRate: number; // the number of correct submission over the 
+  // total number of submission
+  totalAttempts: number;
+  longestStreak: number; // successive mission accomplished
+  phaseSolved: number;
+  currentGame: [null|string, null|number, null|number];
+}
+
 export type AuthContextType = {
   user: User;
   login: (email: string, password: string) => Promise<void>;
@@ -26,3 +48,24 @@ export type GameContextType = {
   updatePoints: (amount: number) => void;
   addSolvedPassword: (password: string) => void;
 };
+
+
+export type ViewGame = {
+  title: string;
+  description: string;
+  energyCost: number;
+  maxAttempts: number;
+  length: number;
+  difficulty: 'Easy' | 'Medium' | 'Hard' | 'Expert' | 'Varies';
+  detailedDescription: string;
+  phase: {
+    description: string;
+    messages: {
+      id: number;
+      text: string;
+      hash: number;
+      position: { top: number, left: number };
+    }[];
+  };
+
+}

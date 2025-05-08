@@ -13,11 +13,11 @@ import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
 import GamePlay from "./pages/GamePlay";
 import Store from "./pages/Store";
- 
-import { loginUser, registerUser } from "./server/logic/user";
+
+import { loginUserC as loginUser, registerUserC as registerUser } from "./server/connection/app";
 import { AuthContextType, GameContextType, User } from "./types";
 import { AuthContext, GameContext, useGame as ug } from "./context";
- 
+
 
 
 
@@ -165,7 +165,7 @@ const App = () => {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+                <Route path="/login" element={ <Login />} />
                 <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
                 <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
                 <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />

@@ -4,29 +4,17 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context";
+import { getLeaderboard, getOwnRank } from "@/server/connection/leaderboard";
 
-// Mock leaderboard data
-const leaderboardData = [
-  { id: 1, name: "CipherMaster", points: 7850, solved: 142, rank: 1 },
-  { id: 2, name: "PuzzleKing", points: 6420, solved: 118, rank: 2 },
-  { id: 3, name: "CodeBreaker99", points: 5980, solved: 105, rank: 3 },
-  { id: 4, name: "DecoderElite", points: 4250, solved: 87, rank: 4 },
-  { id: 5, name: "CryptoWizard", points: 3720, solved: 76, rank: 5 },
-  { id: 6, name: "PuzzleSolver", points: 3190, solved: 62, rank: 6 },
-  { id: 7, name: "SecretAgent", points: 2840, solved: 58, rank: 7 },
-  { id: 8, name: "MysteryHunter", points: 2510, solved: 49, rank: 8 },
-  { id: 9, name: "CipherSeeker", points: 2380, solved: 45, rank: 9 },
-  { id: 10, name: "CodeMaster", points: 2150, solved: 41, rank: 10 },
-  // Current user would be inserted here based on their points in a real implementation
-];
+
 
 const Leaderboard = () => {
   const { user } = useAuth();
   const [filter, setFilter] = useState<'points' | 'solved'>('points');
 
-  const sortedLeaderboard = filter === 'points' 
-    ? [...leaderboardData].sort((a, b) => b.points - a.points)
-    : [...leaderboardData].sort((a, b) => b.solved - a.solved);
+  const sortedLeaderboard = getLeaderboard(filter);
+  const ownRank = getOwnRank(filter, user?.id);
+
 
   return (
     <Layout title="Leaderboard">
@@ -61,15 +49,14 @@ const Leaderboard = () => {
             {sortedLeaderboard.map((player, index) => {
               // Determine if the row is the current user
               const isCurrentUser = player.name === user?.name;
-              
+
               return (
-                <div 
+                <div
                   key={player.id}
-                  className={`grid grid-cols-12 py-3 px-4 border-b border-border ${
-                    isCurrentUser ? 'bg-primary/10' : index % 2 === 0 ? 'bg-card/50' : ''
-                  }`}
+                  className={`grid grid-cols-12 py-3 px-4 border-b border-border ${isCurrentUser ? 'bg-primary/10' : ''
+                    }`}
                 >
-                  <div className="col-span-1 font-medium">#{player.rank}</div>
+                  <div className="col-span-1 font-medium">#{index + 1}</div>
                   <div className="col-span-5 font-medium">
                     {player.name}
                     {isCurrentUser && <span className="ml-2 text-xs text-primary">(You)</span>}
@@ -81,14 +68,16 @@ const Leaderboard = () => {
             })}
 
             {/* Current user stats (in a real app, would get inserted at correct rank position) */}
-            <div className="grid grid-cols-12 py-3 px-4 bg-primary/10">
-              <div className="col-span-1 font-medium">#42</div> {/* Example rank */}
-              <div className="col-span-5 font-medium">
-                {user?.name} <span className="ml-2 text-xs text-primary">(You)</span>
+            {ownRank.rank > 10 ?
+              <div className="grid grid-cols-12 py-3 px-4 bg-primary/10">
+                <div className="col-span-1 font-medium">#{ownRank.rank}</div>
+                <div className="col-span-5 font-medium">
+                  {user?.name} <span className="ml-2 text-xs text-primary">(You)</span>
+                </div>
+                <div className="col-span-3 text-right">{ownRank.points.toLocaleString()}</div>
+                <div className="col-span-3 text-right">{ownRank.solved}</div>
               </div>
-              <div className="col-span-3 text-right">320</div> {/* Example points */}
-              <div className="col-span-3 text-right">8</div> {/* Example solved */}
-            </div>
+              : <></>}
           </CardContent>
         </Card>
 
@@ -98,19 +87,19 @@ const Leaderboard = () => {
             <Card className="cipher-card">
               <CardContent className="p-6 text-center">
                 <p className="text-sm text-muted-foreground mb-1">Global Rank</p>
-                <p className="text-4xl font-bold">#42</p> {/* Example rank */}
+                <p className="text-4xl font-bold">#{ownRank.rank}</p> {/* Example rank */}
               </CardContent>
             </Card>
             <Card className="cipher-card">
               <CardContent className="p-6 text-center">
                 <p className="text-sm text-muted-foreground mb-1">Points</p>
-                <p className="text-4xl font-bold">320</p> {/* Example points */}
+                <p className="text-4xl font-bold">{ownRank.points.toLocaleString()}</p> {/* Example points */}
               </CardContent>
             </Card>
             <Card className="cipher-card">
               <CardContent className="p-6 text-center">
                 <p className="text-sm text-muted-foreground mb-1">Puzzles Solved</p>
-                <p className="text-4xl font-bold">8</p> {/* Example solved */}
+                <p className="text-4xl font-bold">{ownRank.solved.toLocaleString()}</p> {/* Example solved */}
               </CardContent>
             </Card>
           </div>

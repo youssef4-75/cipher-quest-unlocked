@@ -9,40 +9,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Search, Terminal, Shield, Database, Code } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { sendUseDemand } from "@/connection/profile";
+import { getProfile, sendUseDemand } from "@/server/connection/profile";
 
-const mockAchievements = [
-  { id: 1, name: "First Steps", description: "Complete your first game", unlocked: true },
-  { id: 2, name: "Apprentice Decoder", description: "Solve 5 puzzles", unlocked: true },
-  { id: 3, name: "Code Cracker", description: "Complete a Hard difficulty game", unlocked: false },
-  { id: 4, name: "Perfect Run", description: "Complete a game without any failed attempts", unlocked: true },
-  { id: 5, name: "Cipher Master", description: "Solve 50 puzzles", unlocked: false },
-];
 
-const mockStats = {
-  totalPlaytime: "5h 23m",
-  gamesPlayed: 8,
-  gamesWon: 6,
-  successRate: "75%",
-  longestStreak: 3,
-  totalPhasesSolved: 18,
-};
 
-const mockInventory = [
-  { id: 1, name: "Energy Refill", description: "Instantly refill 50 energy", quantity: 2, icon: "⚡" },
-  { id: 2, name: "Letter Reveal", description: "Reveal one letter in the password", quantity: 1, icon: "🔍" },
-  { id: 3, name: "Extra Attempt", description: "Get an additional attempt for a game", quantity: 0, icon: "🎯" },
-];
+
 
 const Profile = () => {
-  const { user } = useAuth();
-  const { energy, points, solvedPasswords } = useGame();
+  const { user: { id } } = useAuth();
   const [passwordFilter, setPasswordFilter] = useState("");
-  
-  const filteredPasswords = passwordFilter 
-    ? solvedPasswords.filter(pwd => pwd.toLowerCase().includes(passwordFilter.toLowerCase())) 
-    : solvedPasswords;
+  const { solvedPasswords, name, email, level, points, energy, achievements, inventory, stats } = getProfile(id);
 
+  const filteredPasswords = passwordFilter
+    ? solvedPasswords.filter(pwd => pwd.toLowerCase().includes(passwordFilter.toLowerCase()))
+    : solvedPasswords;
   return (
     <Layout title="Player Profile">
       {/* Hacker-themed decorative elements */}
@@ -57,14 +37,14 @@ const Profile = () => {
           ))}
         </div>
       </div>
-      
+
       <div className="relative z-10">
         {/* Left column - Player info */}
         <div className="lg:col-span-1">
           <Card className="cipher-card mb-6 relative overflow-hidden border-cipher-400/50 shadow-lg shadow-cipher-400/20">
             <div className="absolute top-0 right-0 p-2">
               <Badge variant="outline" className="font-mono bg-cipher-500/10 border-cipher-300/30">
-                <Code className="w-3 h-3 mr-1" /> Level 5
+                <Code className="w-3 h-3 mr-1" /> Level {level}
               </Badge>
             </div>
             <CardHeader>
@@ -77,16 +57,16 @@ const Profile = () => {
               <div className="cipher-terminal p-2 bg-cipher-900/50 rounded-md border border-cipher-400/30">
                 <p className="text-sm text-cipher-300 font-mono mb-1">$ identify user</p>
                 <p className="text-xs text-muted-foreground font-mono mb-2">{"> scanning biometrics..."}</p>
-                <p className="text-sm font-medium">{user?.name}</p>
+                <p className="text-sm font-medium">{name}</p>
               </div>
-              
+
               <div>
                 <p className="text-sm text-muted-foreground flex items-center gap-1">
                   <Shield className="w-3 h-3" /> Authentication
                 </p>
-                <p className="font-medium font-mono">{user?.email}</p>
+                <p className="font-medium font-mono">{email}</p>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-2 rounded-md bg-cipher-900/30">
                   <p className="text-xs text-muted-foreground">Energy</p>
@@ -98,7 +78,7 @@ const Profile = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="p-2 rounded-md bg-cipher-900/30">
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Database className="w-3 h-3" /> Points
@@ -106,13 +86,13 @@ const Profile = () => {
                   <p className="font-medium font-mono text-cipher-300">{points}</p>
                 </div>
               </div>
-              
+
               <div>
                 <p className="text-sm text-muted-foreground">Passwords Collected</p>
                 <p className="font-medium font-mono">{solvedPasswords.length}</p>
                 <div className="w-full h-1 bg-muted rounded-full overflow-hidden mt-1">
-                  <div 
-                    className="h-full bg-gradient-to-r from-cyan-500 to-primary" 
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-500 to-primary"
                     style={{ width: `${Math.min(100, (solvedPasswords.length / 100) * 100)}%` }}
                   ></div>
                 </div>
@@ -120,7 +100,7 @@ const Profile = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="cipher-card mb-6 relative overflow-hidden border-cipher-400/50 shadow-lg shadow-cipher-400/20">
             <div className="absolute -top-1 -right-1 w-20 h-20 bg-gradient-to-br from-cyan-500/20 to-primary/20 blur-2xl rounded-full"></div>
             <CardHeader>
@@ -132,7 +112,7 @@ const Profile = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockInventory.map(item => (
+                {inventory.map(item => (
                   <div key={item.id} className="flex items-center justify-between cipher-card p-2">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded bg-cipher-900 border border-cipher-400/30 flex items-center justify-center text-xl">
@@ -163,14 +143,14 @@ const Profile = () => {
               <TabsTrigger value="achievements" className="font-mono text-xs">ACHIEVE.DAT</TabsTrigger>
               <TabsTrigger value="passwords" className="font-mono text-xs">PWD.LIST</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="stats" className="p-4">
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Terminal className="w-5 h-5 text-cipher-300" /> 
+                <Terminal className="w-5 h-5 text-cipher-300" />
                 <span>Player Statistics</span>
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {Object.entries(mockStats).map(([key, value]) => (
+                {Object.entries(stats).map(([key, value]) => (
                   <Card key={key} className="bg-card/50 border-cipher-400/20 shadow-inner">
                     <CardContent className="p-4">
                       <p className="text-xs text-muted-foreground font-mono">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
@@ -180,40 +160,38 @@ const Profile = () => {
                 ))}
               </div>
             </TabsContent>
-            
+
             <TabsContent value="achievements" className="p-4">
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-cipher-300" /> 
+                <Shield className="w-5 h-5 text-cipher-300" />
                 <span>Achievements</span>
               </h3>
               <div className="space-y-4">
-                {mockAchievements.map(achievement => (
-                  <Card 
-                    key={achievement.id} 
-                    className={`${achievement.unlocked ? 'bg-card border-cipher-400/30' : 'bg-card/30 opacity-70 border-dashed'}`}
+                {achievements.map(achievement => (
+                  <Card
+                    key={achievement.id}
+                    className={'bg-card border-cipher-400/30'}
                   >
                     <CardContent className="p-4 flex justify-between items-center">
                       <div>
                         <h4 className="font-medium font-mono">{achievement.name}</h4>
                         <p className="text-sm text-muted-foreground">{achievement.description}</p>
                       </div>
-                      {achievement.unlocked ? (
-                        <Badge className="bg-primary">Unlocked</Badge>
-                      ) : (
-                        <Badge variant="outline" className="font-mono text-xs">LOCKED</Badge>
-                      )}
+
+                      <Badge className="bg-primary">Unlocked</Badge>
+
                     </CardContent>
                   </Card>
                 ))}
               </div>
             </TabsContent>
-            
+
             <TabsContent value="passwords" className="p-4">
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Code className="w-5 h-5 text-cipher-300" /> 
+                <Code className="w-5 h-5 text-cipher-300" />
                 <span>Password Collection</span>
               </h3>
-              
+
               <div className="mb-4 relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -223,7 +201,7 @@ const Profile = () => {
                   onChange={(e) => setPasswordFilter(e.target.value)}
                 />
               </div>
-              
+
               {filteredPasswords.length > 0 ? (
                 <div className="password-collection">
                   {filteredPasswords.map((password, index) => (
