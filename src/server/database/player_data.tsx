@@ -4,7 +4,7 @@ import { UserData } from "@/types";
 
 export const users: Record<string, UserData> = {
     user_lt2qh99: {
-        name: "Youssef0",
+        name: "user0",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
@@ -44,7 +44,7 @@ export const users: Record<string, UserData> = {
         currentGame: [null, null, null],
     },
     user_1: {
-        name: "Youssef1",
+        name: "user1",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
@@ -65,7 +65,7 @@ export const users: Record<string, UserData> = {
         currentGame: [null, null, null],
     },
     user_2: {
-        name: "Youssef2",
+        name: "user2",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
@@ -85,7 +85,7 @@ export const users: Record<string, UserData> = {
         currentGame: [null, null, null],
     },
     user_3: {
-        name: "Youssef3",
+        name: "user3",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
@@ -105,7 +105,7 @@ export const users: Record<string, UserData> = {
         currentGame: [null, null, null],
     },
     user_4: {
-        name: "Youssef4",
+        name: "user4",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
@@ -125,7 +125,7 @@ export const users: Record<string, UserData> = {
         currentGame: [null, null, null],
     },
     user_5: {
-        name: "Youssef5",
+        name: "user5",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
@@ -145,7 +145,7 @@ export const users: Record<string, UserData> = {
         currentGame: [null, null, null],
     },
     user_6: {
-        name: "Youssef6",
+        name: "user6",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
@@ -165,7 +165,7 @@ export const users: Record<string, UserData> = {
         currentGame: [null, null, null],
     },
     user_7: {
-        name: "Youssef7",
+        name: "user7",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
@@ -185,7 +185,7 @@ export const users: Record<string, UserData> = {
         currentGame: [null, null, null],
     },
     user_8: {
-        name: "Youssef8",
+        name: "user8",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
@@ -205,7 +205,7 @@ export const users: Record<string, UserData> = {
         currentGame: [null, null, null],
     },
     user_9: {
-        name: "Youssef9",
+        name: "user9",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
@@ -225,7 +225,7 @@ export const users: Record<string, UserData> = {
         currentGame: [null, null, null],
     },
     user_10: {
-        name: "Youssef0",
+        name: "user0",
         auth_mail: "you@gmail.com",
         password: "2",
         winStreak: 0,
