@@ -35,6 +35,7 @@ export type UserDataPrivate = {
     phase: number | null;
     attempt: number | null;
     startTime: number | null;
+    entryTimes: number | null;
   };
 }
 

@@ -122,9 +122,9 @@ const Dashboard = () => {
               <Link to={`/gameplay/${game.id}`} onClick={() => handleGameStart(game.id, game.energyCost)}>
                 <Button
                   className="w-full"
-                  disabled={energy < game.energyCost}
+                  disabled={energy < game.energyCost || !game.playable}
                 >
-                  {energy < game.energyCost ? "Not Enough Energy" : "Play Now"}
+                  {energy < game.energyCost ? "Not Enough Energy" : game.playable ? "Play Now" : "Another game is unfinished"}
                 </Button>
               </Link>
             </div>

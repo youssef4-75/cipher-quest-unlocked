@@ -10,7 +10,7 @@ const users: Record<string, UserData> = {
         winStreak: 0,
         level: 1,
         themes: {},
-        energy: 1,
+        energy: 100,
         points: 10,
         collectedPwd: [],
         memberSince: "03-05-2025",
@@ -25,7 +25,8 @@ const users: Record<string, UserData> = {
             gameId: null,
             phase: null,
             attempt: null,
-            startTime: null
+            startTime: null,
+            entryTimes: null,
         },
     },
     default: {
@@ -50,7 +51,8 @@ const users: Record<string, UserData> = {
             gameId: null,
             phase: null,
             attempt: null,
-            startTime: null
+            startTime: null,
+            entryTimes: null,
         },
     },
     user_1: {
@@ -76,7 +78,8 @@ const users: Record<string, UserData> = {
             gameId: null,
             phase: null,
             attempt: null,
-            startTime: null
+            startTime: null,
+            entryTimes: null,
         },
     },
     user_2: {
@@ -101,7 +104,8 @@ const users: Record<string, UserData> = {
             gameId: null,
             phase: null,
             attempt: null,
-            startTime: null
+            startTime: null,
+            entryTimes: null,
         },
     },
     user_3: {
@@ -126,184 +130,10 @@ const users: Record<string, UserData> = {
             gameId: null,
             phase: null,
             attempt: null,
-            startTime: null
+            startTime: null,
+            entryTimes: null,
         },
-    },
-    user_4: {
-        name: "user4",
-        auth_mail: "you@gmail.com",
-        password: "2",
-        winStreak: 0,
-        themes: {},
-        level: 1,
-        energy: 100,
-        points: 10,
-        collectedPwd: [],
-        memberSince: "03-05-2025",
-        totalGamePlayed: 0,
-        accomplishedMission: 0,
-        wellAttempts: 0, // the number of correct submission over the 
-        // total number of submission
-        totalAttempts: 0,
-        longestStreak: 0, // successive mission accomplished
-        phaseSolved: 0,
-        currentGame: {
-            gameId: null,
-            phase: null,
-            attempt: null,
-            startTime: null
-        },
-    },
-    user_5: {
-        name: "user5",
-        auth_mail: "you@gmail.com",
-        password: "2",
-        winStreak: 0,
-        themes: {},
-        level: 1,
-        energy: 100,
-        points: 10,
-        collectedPwd: [],
-        memberSince: "03-05-2025",
-        totalGamePlayed: 0,
-        accomplishedMission: 0,
-        wellAttempts: 0, // the number of correct submission over the 
-        // total number of submission
-        totalAttempts: 0,
-        longestStreak: 0, // successive mission accomplished
-        phaseSolved: 0,
-        currentGame: {
-            gameId: null,
-            phase: null,
-            attempt: null,
-            startTime: null
-        },
-    },
-    user_6: {
-        name: "user6",
-        auth_mail: "you@gmail.com",
-        password: "2",
-        winStreak: 0,
-        themes: {},
-        level: 1,
-        energy: 100,
-        points: 10,
-        collectedPwd: [],
-        memberSince: "03-05-2025",
-        totalGamePlayed: 0,
-        accomplishedMission: 0,
-        wellAttempts: 0, // the number of correct submission over the 
-        // total number of submission
-        totalAttempts: 0,
-        longestStreak: 0, // successive mission accomplished
-        phaseSolved: 0,
-        currentGame: {
-            gameId: null,
-            phase: null,
-            attempt: null,
-            startTime: null
-        },
-    },
-    user_7: {
-        name: "user7",
-        auth_mail: "you@gmail.com",
-        password: "2",
-        winStreak: 0,
-        themes: {},
-        level: 1,
-        energy: 100,
-        points: 10,
-        collectedPwd: [],
-        memberSince: "03-05-2025",
-        totalGamePlayed: 0,
-        accomplishedMission: 0,
-        wellAttempts: 0, // the number of correct submission over the 
-        // total number of submission
-        totalAttempts: 0,
-        longestStreak: 0, // successive mission accomplished
-        phaseSolved: 0,
-        currentGame: {
-            gameId: null,
-            phase: null,
-            attempt: null,
-            startTime: null
-        },
-    },
-    user_8: {
-        name: "user8",
-        auth_mail: "you@gmail.com",
-        password: "2",
-        winStreak: 0,
-        themes: {},
-        level: 1,
-        energy: 100,
-        points: 10,
-        collectedPwd: [],
-        memberSince: "03-05-2025",
-        totalGamePlayed: 0,
-        accomplishedMission: 0,
-        wellAttempts: 0, // the number of correct submission over the 
-        // total number of submission
-        totalAttempts: 0,
-        longestStreak: 0, // successive mission accomplished
-        phaseSolved: 0,
-        currentGame: {
-            gameId: null,
-            phase: null,
-            attempt: null,
-            startTime: null
-        },
-    },
-    user_9: {
-        name: "user9",
-        auth_mail: "you@gmail.com",
-        password: "2",
-        winStreak: 0,
-        themes: {},
-        level: 1,
-        energy: 100,
-        points: 10,
-        collectedPwd: [],
-        memberSince: "03-05-2025",
-        totalGamePlayed: 0,
-        accomplishedMission: 0,
-        wellAttempts: 0, // the number of correct submission over the 
-        // total number of submission
-        totalAttempts: 0,
-        longestStreak: 0, // successive mission accomplished
-        phaseSolved: 0,
-        currentGame: {
-            gameId: null,
-            phase: null,
-            attempt: null,
-            startTime: null
-        },
-    },
-    user_10: {
-        name: "user0",
-        auth_mail: "you@gmail.com",
-        password: "2",
-        winStreak: 0,
-        themes: {},
-        level: 1,
-        energy: 100,
-        points: 10,
-        collectedPwd: [],
-        memberSince: "03-05-2025",
-        totalGamePlayed: 0,
-        accomplishedMission: 0,
-        wellAttempts: 0, // the number of correct submission over the 
-        // total number of submission
-        totalAttempts: 0,
-        longestStreak: 0, // successive mission accomplished
-        phaseSolved: 0,
-        currentGame: {
-            gameId: null,
-            phase: null,
-            attempt: null,
-            startTime: null
-        },
-    },
+    }
 
 }
 

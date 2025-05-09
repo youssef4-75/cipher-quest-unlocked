@@ -16,8 +16,14 @@ export function notifyEntry(gameId: string, key: string) {
     const game = getGame(gameId);
     const user = getUser(key);
 
-    if (user.currentGame.gameId !== null) {
+    if (![null, gameId].includes(user.currentGame.gameId)) {
         throw "This player is already in another game";
+    }
+
+    if (user.currentGame.entryTimes === null) {
+        user.currentGame.entryTimes = 1;
+    } else {
+        user.currentGame.entryTimes += 1;
     }
     const energyCost = game.energyCost;
     const energy = user.energy;

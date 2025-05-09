@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { HelpCircle, Info, Grab } from "lucide-react";
-import { generateHint, getGames, highlightPassword, submitAnswer } from '@/server/connection/game_play';
+import { generateHint, getGames, highlightPassword, notifyLoss, submitAnswer } from '@/server/connection/game_play';
 import { ViewGame } from "@/types";
 
 
@@ -25,10 +25,11 @@ const GamePlay = () => {
   const navigate = useNavigate();
 
 
-  const [game, setGame] = useState<ViewGame|null>(null);
+  const [game, setGame] = useState<ViewGame | null>(null);
   const [timer, setTimer] = useState<number>(0);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [attempts, setAttempts] = useState(0);
+  const [lostReason, setLostReason] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [reward, setReward] = useState("");
   const [gameStatus, setGameStatus] = useState<"playing" | "won" | "lost">("playing");
@@ -45,8 +46,6 @@ const GamePlay = () => {
 
 
   useEffect(() => {
-
-
 
     // Get game data
     const selectedGame: ViewGame = getGames(gameId, id);
@@ -73,6 +72,11 @@ const GamePlay = () => {
     }
   }, [gameId]);
 
+  const Surrender = () => {
+    notifyLoss(gameId, id);
+    setGameStatus("lost");
+    setLostReason("Surrendering");
+  }
   // Start the game 
   const startGame = () => {
     if (!game) return;
@@ -213,7 +217,7 @@ const GamePlay = () => {
 
         setTimer(0);
         setGame(getGames(gameId, id));
-        
+
 
         setPassword("");
         setRevealedHint(null);
@@ -242,6 +246,7 @@ const GamePlay = () => {
       if (state === "lost") {
         // Game over
         setGameStatus("lost");
+        setLostReason("Reaching the max attempts");
 
         toast({
           title: "Game Over",
@@ -288,8 +293,7 @@ const GamePlay = () => {
   // Add timer effect
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
-    console.log({timeLimit: game?.timeLimit, timer});
-    
+
 
     if (gameStatus === "playing" && !infoDialogOpen) {
       intervalId = setInterval(() => {
@@ -304,13 +308,16 @@ const GamePlay = () => {
     };
   }, [gameStatus, infoDialogOpen]);
 
+  // Check if the game is over by time limit exceeded
   useEffect(() => {
     if (game && timer >= game.timeLimit) {
+      notifyLoss(gameId, id);
       setGameStatus("lost");
+      setLostReason("exceeding the time limit");
 
       toast({
         title: "Game Over",
-        description: "You've run out of attempts.",
+        description: "You've run out of time.",
         variant: "destructive",
       });
     }
@@ -516,6 +523,13 @@ const GamePlay = () => {
                 >
                   Use Hint ({HINT_COST} Points)
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={Surrender}
+                  className="text-sm ml-4"
+                >
+                  Surrender
+                </Button>
               </div>
             </div>
           </>
@@ -535,7 +549,7 @@ const GamePlay = () => {
         ) : (
           <div className="text-center p-10 cipher-card">
             <h2 className="text-2xl font-bold mb-4 text-destructive">Game Over</h2>
-            <p className="mb-6">You've run out of attempts. Better luck next time!</p>
+            <p className="mb-6">You lost by {lostReason}. Better luck next time!</p>
             <Button onClick={resetGame} variant="outline">Return to Dashboard</Button>
           </div>
         )}
