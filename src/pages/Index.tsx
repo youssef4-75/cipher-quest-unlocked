@@ -25,7 +25,7 @@ const Index = () => {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 max-w-5xl w-full">
-          <Link to="/dashboard">
+          <Link to="/login">
             <div className="cipher-card p-6 flex flex-col items-center">
               <div className="text-4xl mb-4 text-cyan-400 animate-float">🧩</div>
               <h3 className="text-xl font-semibold mb-2 glow-text">Challenging Puzzles</h3>
@@ -34,7 +34,7 @@ const Index = () => {
               </p>
             </div>
           </Link>
-          <Link to="/dashboard">
+          <Link to="/login">
 
             <div className="cipher-card p-6 flex flex-col items-center">
               <div className="text-4xl mb-4 text-purple-400 animate-float">🔐</div>
@@ -44,7 +44,7 @@ const Index = () => {
               </p>
             </div>
           </Link>
-          <Link to="/dashboard">
+          <Link to="/login">
             <div className="cipher-card p-6 flex flex-col items-center">
               <div className="text-4xl mb-4 text-yellow-400 animate-float">🏆</div>
               <h3 className="text-xl font-semibold mb-2 glow-text">Earn Rewards</h3>
@@ -59,7 +59,7 @@ const Index = () => {
 
         <div className="flex gap-4">
           {user ? (
-            <Link to="/dashboard">
+            <Link to="/login">
               <Button size="lg" className="px-8">
                 Continue Playing
               </Button>
