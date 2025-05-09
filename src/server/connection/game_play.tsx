@@ -1,6 +1,7 @@
 import { getGame, validGameId } from "@/server/logic/get_game";
 import { getUser } from "@/server/logic/users";
 import { PartialGame } from "../logic/types";
+import { updateUserDB } from "../database/player_data";
 
 
 const HINT_COST = 5;
@@ -57,16 +58,11 @@ function hinting(realPassword: string, currentHint: string) {
     return hint;
 }
 
-function WinGame(gameId: string, user_auth: string) {
-    const user = getUser(user_auth);
+function WinGame(gameId: string, key: string) {
+    const user = getUser(key);
     const game = getGame(gameId);
 
-    user.succesRate = Math.round(((user.succesRate
-        * user.totalAttempts
-        + game.maxAttempts
-        - user.currentGame[2])
-        / (user.totalAttempts
-            + game.maxAttempts)));
+    user.wellAttempts = game.length 
     // add the theme to the user's themes
     user.themes[game.theme] = (user.themes[game.theme] || 0) + 1;
     user.accomplishedMission += 1;
@@ -74,12 +70,14 @@ function WinGame(gameId: string, user_auth: string) {
     if (user.winStreak > user.longestStreak) {
         user.longestStreak = user.winStreak;
     }
-    user.totalAttempts += game.maxAttempts - user.currentGame[2];
-    user.currentGame[0] = null;
-    user.currentGame[1] = null;
-    user.currentGame[2] = null;
+    user.totalAttempts += user.currentGame.attempt + game.length;
+    user.currentGame.gameId = null;
+    user.currentGame.phase = null;
+    user.currentGame.attempt = null;
 
     if(user.collectedPwd.includes(game.finalPassword)) {
+        user.points += 10;
+        updateUserDB(key, user);
         return;
     }
 
@@ -92,35 +90,40 @@ function WinGame(gameId: string, user_auth: string) {
     user.totalGamePlayed += 1;
 
     
-
-
+    
+    updateUserDB(key, user);
     // handling achievements and inventory, for the backend to developp
 
 }
 
-function LoseGame(gameId: string, user_auth: string) {
-    const user = getUser(user_auth);
+function LoseGame(gameId: string, key: string) {
+    const user = getUser(key);
     const game = getGame(gameId);
 
     user.winStreak = 0;
     user.totalGamePlayed += 1;
-    user.succesRate = Math.round(((user.succesRate * user.totalAttempts)
-        / (user.totalAttempts + game.maxAttempts)));
-    user.totalAttempts += game.maxAttempts - user.currentGame[2];
-    user.currentGame[0] = null;
-    user.currentGame[1] = null;
-    user.currentGame[2] = null;
+    user.wellAttempts += user.currentGame.phase;
+    user.totalAttempts += game.maxAttempts + user.currentGame.phase;
+    user.currentGame.gameId = null;
+    user.currentGame.phase = null;
+    user.currentGame.attempt = null;
+
+    updateUserDB(key, user);
 }
+
 
 
 
 // ------------------------------------------------------------------------------------------------------
 
-export function getGames(gameId: string, user_auth: string): PartialGame {
+export function getGames(gameId: string, key: string): PartialGame|null {
     // backend logic here for getting the games from the database
 
-    const user = getUser(user_auth);
-    const phaseIndex = user.currentGame[1] || 0;
+    const user = getUser(key);
+    if(user.currentGame.gameId != gameId){
+        return null;
+    }
+    const phaseIndex = user.currentGame.phase || 0;
     if (validGameId(gameId)) {
         const { length, title, description, energyCost,
             maxAttempts, difficulty, detailedDescription, phases, timeLimit } = getGame(gameId);
@@ -146,10 +149,10 @@ export function getGames(gameId: string, user_auth: string): PartialGame {
 }
 
 
-export function generateHint(gameId: string, user_auth: string, hintText: string) {
+export function generateHint(gameId: string, key: string, hintText: string) {
 
-    const user = getUser(user_auth);
-    const phase = user.currentGame[1] || 0;
+    const user = getUser(key);
+    const phase = user.currentGame.phase || 0;
     if (validGameId(gameId)) {
         if (user.points < HINT_COST) {
             return null;
@@ -168,6 +171,7 @@ export function generateHint(gameId: string, user_auth: string, hintText: string
 
         // Deduct points
         user.points -= HINT_COST;
+        updateUserDB(key, user);
         return hintText;
 
     }
@@ -175,21 +179,21 @@ export function generateHint(gameId: string, user_auth: string, hintText: string
 }
 
 
-export function submitAnswer(user_auth: string, passwordTentative: string, hintText: string): {
+export function submitAnswer(key: string, passwordTentative: string, hintText: string): {
     state: string,
     res: {
         finalPassword: string,
         sim: number
     }
 } {
-    const user = getUser(user_auth);
-    const gameId = user.currentGame[0];
-    const phaseIndex = user.currentGame[1] || 0;
+    const user = getUser(key);
+    const gameId = user.currentGame.gameId;
+    const phaseIndex = user.currentGame.phase || 0;
 
 
     if (validGameId(gameId)) {
         const game = getGame(gameId);
-        if (user.currentGame[1] >= game.maxAttempts) {
+        if (user.currentGame.attempt >= game.maxAttempts || user.currentGame.startTime + game.timeLimit < Date.now()) {
             return { state: 'useless', res: { finalPassword: null, sim: 0 } }
         }
         const currentPhaseData = game.phases[phaseIndex];
@@ -198,10 +202,12 @@ export function submitAnswer(user_auth: string, passwordTentative: string, hintT
             // Password is correct
             // setCurrentPhase(prev => prev + 1);
 
-            user.currentGame[1] += 1
-            if (user.currentGame[1] === game.length) {
+            user.currentGame.phase += 1
+            user.phaseSolved += 1
+            updateUserDB(key, user);
+            if (user.currentGame.phase === game.length) {
                 // Game completed
-                WinGame(gameId, user_auth);
+                WinGame(gameId, key);
                 return { state: 'win', res: { finalPassword: game.finalPassword, sim: 0 } };
 
             } else {
@@ -211,7 +217,7 @@ export function submitAnswer(user_auth: string, passwordTentative: string, hintT
             }
         } else {
             // Password is incorrect
-            user.currentGame[2] += 1
+            user.currentGame.attempt += 1
             // setAttempts(prev => prev + 1);
 
             // Calculate similarity score
@@ -219,11 +225,12 @@ export function submitAnswer(user_auth: string, passwordTentative: string, hintT
             const sim = similarity;
 
             // Save the incorrect attempt for highlighting
+            updateUserDB(key, user);
 
 
-            if (user.currentGame[2] >= game.maxAttempts) {
+            if (user.currentGame.attempt >= game.maxAttempts) {
                 // Game over
-                LoseGame(gameId, user_auth)
+                LoseGame(gameId, key)
                 return { state: 'lost', res: { finalPassword: null, sim: 0 } };
 
             } else {
@@ -244,9 +251,9 @@ export const highlightPassword = (attempt: string, gameId: string, key: string):
     // (|attempt|: string, |attemptIndex|: number, |correctPassword|: string, maxAttempts: number): JSX.Element
 
     const user = getUser(key);
-    const attemptIndex = user.currentGame[2];
+    const attemptIndex = user.currentGame.attempt;
     const game = getGame(gameId);
-    const correctPassword = game.phases[user.currentGame[1]].password;
+    const correctPassword = game.phases[user.currentGame.phase].password;
     const maxAttempts = game.maxAttempts;
 
     if (attempt.length > 0) {

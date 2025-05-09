@@ -1,21 +1,21 @@
-import { users } from "../database/player_data";
+import { getUserDB as getUsersDB } from "../database/player_data";
 
 
 
 export function getUser(key: string) {
     
-    if(users.hasOwnProperty(key)) { 
-        const { password, ...rest } = users[key as keyof typeof users];
+    if(getUsersDB().hasOwnProperty(key)) { 
+        const { password, ...rest } = getUsersDB()[key];
         
         return rest;
     }
     
-    return users["default"];
+    return getUsersDB()["default"];
 }
 
 
 export function UsersList() {
-    return Object.values(users).map((element, index) => {
+    return Object.values(getUsersDB()).map((element, index) => {
         const { password, 
             collectedPwd, 
             auth_mail, 

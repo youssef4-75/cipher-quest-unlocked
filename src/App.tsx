@@ -14,9 +14,10 @@ import Leaderboard from "./pages/Leaderboard";
 import GamePlay from "./pages/GamePlay";
 import Store from "./pages/Store";
 
-import { loginUserC as loginUser, registerUserC as registerUser } from "./server/connection/app";
+import { energyRecovery, loginUserC as loginUser, registerUserC as registerUser } from "./server/connection/app";
 import { AuthContextType, GameContextType, User } from "./types";
 import { AuthContext, GameContext, useGame as ug } from "./context";
+import { getProfile } from "./server/connection/profile";
 
 
 
@@ -58,6 +59,7 @@ const App = () => {
   // Save game data when it changes
   useEffect(() => {
     if (user) {
+      const {energy, points, solvedPasswords} = getProfile(user.id);
       localStorage.setItem('cipher_energy', energy.toString());
       localStorage.setItem('cipher_points', points.toString());
       localStorage.setItem('cipher_passwords', JSON.stringify(solvedPasswords));
@@ -69,6 +71,7 @@ const App = () => {
     if (energy < 100) {
       const timer = setTimeout(() => {
         setEnergy(prev => Math.min(prev + 1, 100));
+        energyRecovery(user.id);
       }, 30000); // 30 seconds
 
       return () => clearTimeout(timer);
@@ -82,6 +85,9 @@ const App = () => {
     try {
       // call a function that register the user in the database 
       const key = await registerUser(email, password, name)
+      setEnergy(100);
+      setPoints(100);
+      setSolvedPasswords([]);
 
       setUser({ id: key, name, email })
 
@@ -101,9 +107,12 @@ const App = () => {
     try {
 
       // In a real app, we would verify credentials with the backend
-      const user = await loginUser(email, password)
+      const { energy, points, solvedPasswords, ...user }= await loginUser(email, password)
       setUser(user);
       localStorage.setItem('cipher_user', JSON.stringify(user));
+      setEnergy(energy);
+      setPoints(points);
+      setSolvedPasswords(solvedPasswords);
     } catch (error) {
       console.error('Login failed', error);
       throw error;
@@ -164,9 +173,10 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <Routes>
+
                 <Route path="/" element={<Index />} />
-                <Route path="/login" element={ <Login />} />
-                <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
                 <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
                 <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
                 <Route path="/leaderboard" element={user ? <Leaderboard /> : <Navigate to="/login" />} />

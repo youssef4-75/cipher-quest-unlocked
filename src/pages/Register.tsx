@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ArrowRight } from "lucide-react";
 
 const Register = () => {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,23 +44,25 @@ const Register = () => {
     
     try {
       await register(email, password, name);
+      navigate("/dashboard");
       toast({
         title: "Welcome to Cipher Quest!",
         description: "Your account has been created successfully.",
       });
-    } catch (error) {
+    } catch (error) {      
       toast({
         title: "Registration failed",
         description: "Could not create your account. Please try again.",
         variant: "destructive",
       });
+
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Layout title="">
+    <Layout title="" active={false}>
       <div className="flex items-center justify-center min-h-[70vh]">
         <Card className="w-full max-w-md cipher-card animate-fade-in">
           <CardHeader className="space-y-1 text-center">

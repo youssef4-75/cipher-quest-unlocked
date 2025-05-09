@@ -1,7 +1,7 @@
 import { Game, User } from "../logic/types";
 
 
-export const achievements = [
+const achievements = [
     {
         id: 1,
         name: "First Steps",
@@ -40,5 +40,16 @@ export const achievements = [
     },
 
 ]
+
+
+export const getAchievements: () => {
+    id: number,
+    name: string,
+    description: string,
+    validator: ( _: User, __: Game) => boolean,
+}[] = () => {
+    return achievements;
+}
+
 
 

@@ -1,6 +1,6 @@
-import { games } from "../database/games_data";
-import { users } from "../database/player_data";
+import { getGamesDB } from "../database/games_data";
 import { getUser } from "./users";
+import { Game } from "../logic/types";
 
 
 
@@ -8,8 +8,7 @@ export function getGamesList(key: string){
     const user = getUser(key);
     
     
-    
-    return Object.entries(games).map(([id, game], _) => {
+    return Object.entries(getGamesDB()).map(([id, game], _) => {
         return {
             id: id,
             title: game.title,
@@ -21,16 +20,18 @@ export function getGamesList(key: string){
             difficulty: game.difficulty,
             preDone: user.collectedPwd.includes(game.finalPassword),
             theme: game.theme,
-            isDaily: game.isDaily
+            isDaily: game.isDaily,
+            playable: [null, id].includes(user.currentGame.gameId),
+            
         }
     })
 }
 
 
 export function getGame(gameId: string){
-    return games[gameId as keyof typeof games]
+    return getGamesDB()[gameId]
 }
 
 export function validGameId(gameId: string){
-    return gameId && (gameId in games);
+    return gameId && (gameId in getGamesDB());
 }

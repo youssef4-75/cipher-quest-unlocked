@@ -18,7 +18,7 @@ const Dashboard = () => {
   const { user: { id } } = useAuth();
   const availableGames = getAvailableGames(id);
 
-
+  
   const filteredGames = filter === "all"
     ? availableGames
     : filter === "daily"
@@ -26,7 +26,7 @@ const Dashboard = () => {
       : availableGames.filter(game => game.difficulty.toLowerCase() === filter.toLowerCase());
 
   const handleGameStart = (gameId: string, energyCost: number) => {
-    const res = notifyEntry(gameId, id);
+    notifyEntry(gameId, id);
     if (energy < energyCost) {
       toast({
         title: "Not enough energy",

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
@@ -10,10 +10,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ArrowRight } from "lucide-react";
 
 const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,6 +33,7 @@ const Login = () => {
     
     try {
       await login(email, password);
+      navigate('/dashboard')
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
@@ -48,7 +50,7 @@ const Login = () => {
   };
 
   return (
-    <Layout title="">
+    <Layout title="" active={false}>
       <div className="flex items-center justify-center min-h-[70vh]">
         <Card className="w-full max-w-md cipher-card animate-fade-in">
           <CardHeader className="space-y-1 text-center">

@@ -4,10 +4,10 @@ const ranPosGenerator = () => Math.round(Math.random() * 70)
 const randomPos = () => ({ top: ranPosGenerator(), left: ranPosGenerator() })
 
 
-export const games: Record<string, Game> = {
+const games: Record<string, Game> = {
     game1: {
         title: "The Hidden Message of life",
-        timeLimit: 240,
+        timeLimit: 120,
         isDaily: false,
         theme: "Biology",
         description: "Decode a hidden pattern in the life of a cell to unlock the secret of life.",
@@ -136,7 +136,7 @@ secret representation of the word "life".`,
 
     game2: {
         title: "Time Traveler Dungeon",
-        timeLimit: 240,
+        timeLimit: 120,
         isDaily: false,
         theme: "History",
         description: "Unscramble complex historical patterns to unlock the mysterious secret word.",
@@ -334,7 +334,7 @@ understanding.
 
     game3: {
         title: "Biological Complexity Ladder",
-        timeLimit: 240,
+        timeLimit: 120,
         isDaily: false,
         theme: "Biology",
         description: "Arrange biological concepts by their organizational hierarchy",
@@ -406,7 +406,7 @@ understanding.
 
     game4: {
         title: "Digital Evolution Maze",
-        timeLimit: 240,
+        timeLimit: 120,
         isDaily: false,
         theme: "Digital",
         description: "Navigate through milestones of computing history and logic puzzles",
@@ -478,7 +478,7 @@ understanding.
 
     game5: {
         title: "Societal Impact Nexus",
-        timeLimit: 240,
+        timeLimit: 120,
         isDaily: true,
         theme: "History",
         description: "Evaluate social phenomena through multiple analytical lenses",
@@ -550,7 +550,7 @@ understanding.
 
     game6: {
         title: "Ancient Civilizations Challenge",
-        timeLimit: 240,
+        timeLimit: 120,
         isDaily: false,
         theme: "History",
         description: "Decipher the rise and fall of ancient empires through cryptic clues.",
@@ -623,7 +623,7 @@ understanding.
     
     game7: {
         title: "INPT ya jawhara",
-        timeLimit: 240,
+        timeLimit: 120,
         isDaily: false,
         theme: "Legendery",
         description: "How much you know about INPT? and how much is what you know true?",
@@ -686,3 +686,11 @@ understanding.
         finalPassword: "INPT"
     },
 };
+
+
+
+export const getGamesDB: () => Record<string, Game> = () => {
+    return games;
+}
+
+

@@ -1,5 +1,6 @@
 import { getGame, getGamesList } from "@/server/logic/get_game";
 import { getUser } from "@/server/logic/users";
+import { updateUserDB } from "../database/player_data";
 
 
 
@@ -7,8 +8,7 @@ import { getUser } from "@/server/logic/users";
 export function getAvailableGames(key: string) {
 
     // get the variable from the database
-    const games = getGamesList(key);
-    return games;
+    return getGamesList(key);
 }
 
 export function notifyEntry(gameId: string, key: string) {
@@ -16,19 +16,22 @@ export function notifyEntry(gameId: string, key: string) {
     const game = getGame(gameId);
     const user = getUser(key);
 
-
-    if (user.currentGame[0] !== null) {
+    if (user.currentGame.gameId !== null) {
         throw "This player is already in another game";
     }
     const energyCost = game.energyCost;
     const energy = user.energy;
 
+    
+
     if (energy < energyCost) {
         return null;
     }
-    
-    user.currentGame[0] = gameId;
-    user.currentGame[1] = 0;
-    user.currentGame[2] = 0;
+
+    user.currentGame.gameId = gameId;
+    user.currentGame.phase = 0;
+    user.currentGame.attempt = 0;
+    user.currentGame.startTime = Date.now();
     user.energy -= energyCost;
+    updateUserDB(key, user);
 }

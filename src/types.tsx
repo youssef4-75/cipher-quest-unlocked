@@ -4,16 +4,19 @@
 
 // Auth context
 export type User = {
-    id: string;
-    email: string;
-    name: string;
+  id: string;
+  email: string;
+  name: string;
 } | null;
 
 
-export type UserData = {
+export type UserData = UserDataPrivate & {
+  password: string;
+}
+
+export type UserDataPrivate = {
   name: string;
   auth_mail: string;
-  password: string;
   winStreak: number;
   level: number;
   themes: Record<string, number>;
@@ -23,12 +26,16 @@ export type UserData = {
   memberSince: string;
   totalGamePlayed: number;
   accomplishedMission: number;
-  succesRate: number; // the number of correct submission over the 
-  // total number of submission
+  wellAttempts: number; // the number of correct attempts
   totalAttempts: number;
   longestStreak: number; // successive mission accomplished
   phaseSolved: number;
-  currentGame: [null|string, null|number, null|number];
+  currentGame: {
+    gameId: string | null;
+    phase: number | null;
+    attempt: number | null;
+    startTime: number | null;
+  };
 }
 
 export type AuthContextType = {

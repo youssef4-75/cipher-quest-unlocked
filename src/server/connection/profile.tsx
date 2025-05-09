@@ -11,25 +11,24 @@ export function sendUseDemand(item_to_use: {
     // backend logic goes here
 }
 
-export function getPower(id: string) {
-    
-    const user = getUser(id);
-    if(!user) {
-       
+export function getPower(key: string) {
+
+    const user = getUser(key);
+    if (!user) {
+
         return { energy: 100, points: 0 };
     }
-    
+
     return { energy: user?.energy, points: user?.points };
 }
 
-export function getProfile(id: string) {
+export function getProfile(key: string) {
     // return {solvedPasswords, name, email, points, energy, achievements, inventory, stats}
-    const user = getUser(id);
-  
-    
-    const achievements = getAchievements(id);
-    const inventory = getInventory(id);
-    
+    const user = getUser(key);
+
+    const achievements = getAchievements(key);
+    const inventory = getInventory(key);
+
     const stats = {
         inGameAge: ((Date.now() -
             new Date(user.memberSince).getTime())
@@ -38,7 +37,7 @@ export function getProfile(id: string) {
 
         gamesPlayed: user.totalGamePlayed,
         gamesWon: user.accomplishedMission,
-        successRate: `${user.succesRate}%`,
+        successRate: `${user.wellAttempts / (user.totalAttempts||1)}%`,
         longestStreak: user.longestStreak,
         totalPhasesSolved: user.phaseSolved,
         Theme: Object.keys(user.themes).sort((a, b) => user.themes[b] - user.themes[a])[0] || 'No theme'
@@ -46,7 +45,7 @@ export function getProfile(id: string) {
 
     const solvedPasswords = user.collectedPwd;
     const { name, auth_mail: email, level, points, energy } = user;
-    
+
 
     return { solvedPasswords, name, email, level, points, energy, achievements, inventory, stats };
 

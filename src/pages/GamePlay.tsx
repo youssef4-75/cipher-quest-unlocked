@@ -25,7 +25,7 @@ const GamePlay = () => {
   const navigate = useNavigate();
 
 
-  const [game, setGame] = useState<ViewGame>(null);
+  const [game, setGame] = useState<ViewGame|null>(null);
   const [timer, setTimer] = useState<number>(0);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [attempts, setAttempts] = useState(0);
@@ -213,6 +213,7 @@ const GamePlay = () => {
 
         setTimer(0);
         setGame(getGames(gameId, id));
+        
 
         setPassword("");
         setRevealedHint(null);
@@ -287,6 +288,8 @@ const GamePlay = () => {
   // Add timer effect
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
+    console.log({timeLimit: game?.timeLimit, timer});
+    
 
     if (gameStatus === "playing" && !infoDialogOpen) {
       intervalId = setInterval(() => {
@@ -300,6 +303,18 @@ const GamePlay = () => {
       }
     };
   }, [gameStatus, infoDialogOpen]);
+
+  useEffect(() => {
+    if (game && timer >= game.timeLimit) {
+      setGameStatus("lost");
+
+      toast({
+        title: "Game Over",
+        description: "You've run out of attempts.",
+        variant: "destructive",
+      });
+    }
+  }, [game, timer]);
 
   // Format timer display
   const formatTime = (seconds: number) => {

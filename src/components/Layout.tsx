@@ -1,7 +1,7 @@
 
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/context";
+import { useAuth, useGame } from "@/context";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Trophy, User, Home, LogOut, Zap } from "lucide-react";
@@ -10,15 +10,15 @@ import { getPower } from "@/server/connection/profile";
 type LayoutProps = {
   children: ReactNode;
   title?: string;
+  active?: boolean;
 };
 
-const Layout = ({ children, title = "Cipher Quest" }: LayoutProps) => {
+const Layout = ({ children, title = "Cipher Quest", active=true }: LayoutProps) => {
   const { user, logout } = useAuth();
   const { toast } = useToast();
   
   const { energy, points } = getPower(user?.id);
   
-
   const handleLogout = () => {
     logout();
     toast({
@@ -39,15 +39,15 @@ const Layout = ({ children, title = "Cipher Quest" }: LayoutProps) => {
             </Link>
           </div>
 
-          {user && (
+          {user && active && (
             <div className="flex items-center gap-6">
               <div className="hidden md:flex items-center gap-2 text-muted-foreground">
-                <Zap className="h-4 w-4 text-yellow-400" />
                 <span className="text-sm">{points} Points</span>
               </div>
 
               <div className="flex flex-col w-32">
                 <div className="flex items-center justify-between mb-1">
+                <Zap className="h-4 w-4 text-yellow-400" />
                   <span className="text-xs text-muted-foreground">Energy</span>
                   <span className="text-xs font-medium">{energy}/100</span>
                 </div>
@@ -62,7 +62,7 @@ const Layout = ({ children, title = "Cipher Quest" }: LayoutProps) => {
           )}
 
           <nav className="flex items-center gap-2">
-            {user ? (
+            {user && active ? (
               <>
                 <Link to="/dashboard">
                   <Button variant="ghost" size="sm">
