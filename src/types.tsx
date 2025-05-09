@@ -75,6 +75,7 @@ export type ViewGame = {
       hash: number;
       position: { top: number, left: number };
     }[];
+    explanation: string;
   };
 
 }

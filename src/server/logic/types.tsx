@@ -39,6 +39,7 @@ export type Game = {
             position: { top: number, left: number };
         }[];
         password: string;
+        explanation: string;
     }[];
     finalPassword: string;
 };
@@ -68,6 +69,7 @@ export type PartialGame = {
             hash: number;
             position: { top: number, left: number };
         }[];
+        explanation: string;
     };    
 
 }

@@ -215,6 +215,13 @@ const GamePlay = () => {
           description: "Moving to next phase...",
         });
 
+        // Show phase explanation
+        toast({
+          title: "Phase Explanation",
+          description: game.phase.explanation,
+          duration: 10000, // 10 seconds
+        });
+
         setTimer(0);
         setGame(getGames(gameId, id));
 
