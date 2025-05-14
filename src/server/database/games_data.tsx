@@ -709,7 +709,7 @@ understanding.
                     { id: 6, text: "SESNum", hash: 2310, position: randomPos() },
                     { id: 7, text: "AMOA", hash: 3201, position: randomPos() }
                 ],
-                password: "1",
+                password: "1-1-1-1-1-1-1",
                 explanation: "Among all the filieres at INPT, ASEDS (1) stands out as the most prestigious and challenging program. It delivers  advanced studies in digital systems, making it the most sought-after specialization at the institute. This reflects its reputation as the premier program at INPT.",
             },
 

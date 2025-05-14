@@ -59,7 +59,7 @@ const App = () => {
   // Save game data when it changes
   useEffect(() => {
     if (user) {
-      const {energy, points, solvedPasswords} = getProfile(user.id);
+      const { energy, points, solvedPasswords } = getProfile(user.id);
       localStorage.setItem('cipher_energy', energy.toString());
       localStorage.setItem('cipher_points', points.toString());
       localStorage.setItem('cipher_passwords', JSON.stringify(solvedPasswords));
@@ -107,7 +107,7 @@ const App = () => {
     try {
 
       // In a real app, we would verify credentials with the backend
-      const { energy, points, solvedPasswords, ...user }= await loginUser(email, password)
+      const { energy, points, solvedPasswords, ...user } = await loginUser(email, password)
       setUser(user);
       localStorage.setItem('cipher_user', JSON.stringify(user));
       setEnergy(energy);

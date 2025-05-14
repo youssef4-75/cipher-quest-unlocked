@@ -58,26 +58,18 @@ const Index = () => {
         </div>
 
         <div className="flex gap-4">
-          {user ? (
-            <Link to="/login">
+          <>
+            <Link to="/register">
               <Button size="lg" className="px-8">
-                Continue Playing
+                Start Playing
               </Button>
             </Link>
-          ) : (
-            <>
-              <Link to="/register">
-                <Button size="lg" className="px-8">
-                  Start Playing
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button size="lg" variant="outline">
-                  Login
-                </Button>
-              </Link>
-            </>
-          )}
+            <Link to="/login">
+              <Button size="lg" variant="outline">
+                Login
+              </Button>
+            </Link>
+          </>
         </div>
       </div>
     </Layout>
