@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context";
@@ -14,8 +13,13 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user, login } = useAuth();
+  const { login } = useAuth();
   const { toast } = useToast();
+
+  const resetForm = () => {
+    setEmail("");
+    setPassword("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,15 +37,21 @@ const Login = () => {
     
     try {
       await login(email, password);
-      navigate('/dashboard')
-      toast({
+      if(localStorage.getItem("cipher_user")){
+        toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
+      navigate('/dashboard');
+      }
     } catch (error) {
+      // Reset form fields on error
+      resetForm();
+      
+      // Show error message
       toast({
         title: "Login failed",
-        description: "Invalid email or password",
+        description: error instanceof Error ? error.message : "Invalid email or password",
         variant: "destructive",
       });
     } finally {
@@ -82,12 +92,12 @@ const Login = () => {
                   <label htmlFor="password" className="text-sm font-medium">
                     Password
                   </label>
-                  <Link
+                  {/* <Link
                     to="/forgot-password"
                     className="text-xs text-primary hover:underline"
                   >
                     Forgot password?
-                  </Link>
+                  </Link> */}
                 </div>
                 <Input
                   id="password"

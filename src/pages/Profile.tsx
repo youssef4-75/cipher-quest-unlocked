@@ -1,28 +1,100 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import {
+  Zap,
+  Star,
+  Info,
+  Plus,
+  User,
+  Key,
+  Search, 
+  Terminal, 
+  Shield, 
+  Database, 
+  Code
+} from "lucide-react";
 import Layout from "@/components/Layout";
 import { useAuth, useGame } from "@/context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, Terminal, Shield, Database, Code } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { getProfile, sendUseDemand } from "@/server/connection/profile";
-
-
-
-
+import { getProfile, sendUseDemand } from "@/fetching/profile";
+import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
-  const { user: { id } } = useAuth();
+  const { user } = useAuth();
+  const {energy} = useGame();
+  const { toast } = useToast();
   const [passwordFilter, setPasswordFilter] = useState("");
-  const { solvedPasswords, name, email, level, points, energy, achievements, inventory, stats } = getProfile(id);
+  const [profileData, setProfileData] = useState({
+    solvedPasswords: [],
+    name: "",
+    email: "",
+    level: 0,
+    points: 0,
+    energy: 0,
+    achievements: [],
+    inventory: [],
+    stats: {}
+  });
+
+  const getIconComponent = (iconName: string) => {
+    const iconMap: { [key: string]: JSX.Element } = {
+      info: <Info className="text-indigo-500 h-10 w-10" size={24} />,
+      plus: <Plus className="text-indigo-500 h-10 w-10"size={24} />,
+      star: <Star className="text-indigo-500 h-10 w-10" size={24} />,
+      user: <User className="text-indigo-500 h-10 w-10" size={24} />,
+      zap: <Zap className="text-indigo-500 h-10 w-10" size={24} />,
+      key: <Key className="text-indigo-500 h-10 w-10" size={24} />,
+      search: <Search className="text-indigo-500 h-10 w-10" size={24} />,
+    };
+    return iconMap[iconName] || <Info size={24} />;
+  };
+  
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await getProfile(user?.id);
+        setProfileData(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch profile data",
+          variant: "destructive",
+        });
+      }
+    };
+
+    if (user?.id) {
+      fetchProfile();
+    }
+  }, [user?.id, energy]);
+
+  const handleUseItem = async (item: any) => {
+    try {
+      await sendUseDemand(item, user?.id);
+      // Refresh profile data after using item
+      const data = await getProfile(user?.id);
+      setProfileData(data);
+      toast({
+        title: "Success",
+        description: `Used ${item.name} successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to use item",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredPasswords = passwordFilter
-    ? solvedPasswords.filter(pwd => pwd.toLowerCase().includes(passwordFilter.toLowerCase()))
-    : solvedPasswords;
+    ? profileData.solvedPasswords.filter((pwd: string) => pwd.toLowerCase().includes(passwordFilter.toLowerCase()))
+    : profileData.solvedPasswords;
+
   return (
     <Layout title="Player Profile">
       {/* Hacker-themed decorative elements */}
@@ -44,7 +116,7 @@ const Profile = () => {
           <Card className="cipher-card mb-6 relative overflow-hidden border-cipher-400/50 shadow-lg shadow-cipher-400/20">
             <div className="absolute top-0 right-0 p-2">
               <Badge variant="outline" className="font-mono bg-cipher-500/10 border-cipher-300/30">
-                <Code className="w-3 h-3 mr-1" /> Level {level}
+                <Code className="w-3 h-3 mr-1" /> Level {profileData.level}
               </Badge>
             </div>
             <CardHeader>
@@ -57,24 +129,24 @@ const Profile = () => {
               <div className="cipher-terminal p-2 bg-cipher-900/50 rounded-md border border-cipher-400/30">
                 <p className="text-sm text-cipher-300 font-mono mb-1">$ identify user</p>
                 <p className="text-xs text-muted-foreground font-mono mb-2">{"> scanning biometrics..."}</p>
-                <p className="text-sm font-medium">{name}</p>
+                <p className="text-sm font-medium">{profileData.name}</p>
               </div>
 
               <div>
                 <p className="text-sm text-muted-foreground flex items-center gap-1">
                   <Shield className="w-3 h-3" /> Authentication
                 </p>
-                <p className="font-medium font-mono">{email}</p>
+                <p className="font-medium font-mono">{profileData.email}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-2 rounded-md bg-cipher-900/30">
                   <p className="text-xs text-muted-foreground">Energy</p>
                   <div className="flex items-center">
-                    <p className="font-medium font-mono text-cipher-300">{energy}</p>
+                    <p className="font-medium font-mono text-cipher-300">{profileData.energy}</p>
                     <p className="text-xs text-muted-foreground">/100</p>
                     <div className="ml-2 w-full h-1 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full energy-bar" style={{ width: `${energy}%` }}></div>
+                      <div className="h-full energy-bar" style={{ width: `${profileData.energy}%` }}></div>
                     </div>
                   </div>
                 </div>
@@ -83,20 +155,20 @@ const Profile = () => {
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Database className="w-3 h-3" /> Points
                   </p>
-                  <p className="font-medium font-mono text-cipher-300">{points}</p>
+                  <p className="font-medium font-mono text-cipher-300">{profileData.points}</p>
                 </div>
               </div>
 
               <div>
                 <p className="text-sm text-muted-foreground">Passwords Collected</p>
-                <p className="font-medium font-mono">{solvedPasswords.length}</p>
+                <p className="font-medium font-mono">{profileData.solvedPasswords.length}</p>
                 <div className="w-full h-1 bg-muted rounded-full overflow-hidden mt-1">
                   <div
                     className="h-full bg-gradient-to-r from-cyan-500 to-primary"
-                    style={{ width: `${Math.min(100, (solvedPasswords.length / 100) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (profileData.solvedPasswords.length / 100) * 100)}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-right text-muted-foreground mt-1">{solvedPasswords.length}/100</p>
+                <p className="text-xs text-right text-muted-foreground mt-1">{profileData.solvedPasswords.length}/100</p>
               </div>
             </CardContent>
           </Card>
@@ -112,11 +184,11 @@ const Profile = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {inventory.map(item => (
+                {profileData.inventory.map((item: any) => (
                   <div key={item.id} className="flex items-center justify-between cipher-card p-2">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded bg-cipher-900 border border-cipher-400/30 flex items-center justify-center text-xl">
-                        {item.icon}
+                        {getIconComponent(item._icon)}
                       </div>
                       <div>
                         <p className="font-medium">{item.name}</p>
@@ -125,7 +197,7 @@ const Profile = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="font-mono">x{item.quantity}</Badge>
-                      <Button onClick={(e) => sendUseDemand(item)} size="sm" disabled={item.quantity === 0}>Use</Button>
+                      <Button onClick={() => handleUseItem(item)} size="sm" disabled={item.quantity === 0}>Use</Button>
                     </div>
                   </div>
                 ))}
@@ -150,11 +222,11 @@ const Profile = () => {
                 <span>Player Statistics</span>
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {Object.entries(stats).map(([key, value]) => (
+                {Object.entries(profileData.stats).map(([key, value]) => (
                   <Card key={key} className="bg-card/50 border-cipher-400/20 shadow-inner">
                     <CardContent className="p-4">
                       <p className="text-xs text-muted-foreground font-mono">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
-                      <p className="text-lg font-medium font-mono text-cipher-300">{value}</p>
+                      <p className="text-lg font-medium font-mono text-cipher-300">{String(value)}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -167,7 +239,7 @@ const Profile = () => {
                 <span>Achievements</span>
               </h3>
               <div className="space-y-4">
-                {achievements.map(achievement => (
+                {profileData.achievements.map((achievement: any) => (
                   <Card
                     key={achievement.id}
                     className={'bg-card border-cipher-400/30'}
@@ -204,7 +276,7 @@ const Profile = () => {
 
               {filteredPasswords.length > 0 ? (
                 <div className="password-collection">
-                  {filteredPasswords.map((password, index) => (
+                  {filteredPasswords.map((password: string, index: number) => (
                     <div key={index} className="password-item font-mono text-xs hover:bg-cipher-900/30 hover:border-cipher-300 transition-colors">
                       {password}
                     </div>

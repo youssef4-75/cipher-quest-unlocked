@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { useAuth, useGame } from "@/context";
 import {
@@ -7,16 +7,9 @@ import {
   TabsList,
   TabsTrigger
 } from "@/components/ui/tabs";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/sonner";
+
 import {
   Coins,
   Zap,
@@ -27,137 +20,105 @@ import {
   Plus,
   User,
   Key,
-  Search
+  Search,
 } from "lucide-react";
 import StoreItemCard from "@/components/ui/StoreItemCard";
 import { useToast } from "@/hooks/use-toast";
+import { getInv as getInventory, purchaseItem } from "@/fetching/store";
+import { StoreItem, ItemCategory } from "@/types";
+import { getPower } from "@/fetching/profile";
 
-// Store item types
-type ItemCategory = "powerUps" | "cosmetics" | "energy" | "special";
 
-interface StoreItem {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  icon: React.ReactNode;
-  category: ItemCategory;
-  isPermanent: boolean;
-  effect?: string;
-}
+
+
 
 const Store = () => {
   const { points, updatePoints } = useGame();
+  const {user: {id}} = useAuth();
+  const [userPower, setUserPower] = useState<{energy: number, points: number}>({energy: 0, points})
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState<ItemCategory>("powerUps");
-  // Store items data
-  const storeItems: StoreItem[] = [
-    // Power-Ups
-    {
-      id: "hint-pack",
-      name: "Hint Pack",
-      description: "Reveals a portion of the password",
-      price: 50,
-      icon: <Info className="text-primary h-10 w-10" />,
-      category: "powerUps",
-      isPermanent: false,
-      effect: "Reveals 2 characters of the password"
-    },
-    {
-      id: "extra-attempts",
-      name: "Extra Attempts",
-      description: "Get 3 more attempts at solving puzzles",
-      price: 100,
-      icon: <Plus className="text-green-500 h-10 w-10" />,
-      category: "powerUps",
-      isPermanent: false,
-      effect: "+3 attempts on any puzzle"
-    },
-    // Cosmetics
-    {
-      id: "dark-theme",
-      name: "Dark Hacker Theme",
-      description: "Change your profile appearance to a sleek dark hacker theme",
-      price: 200,
-      icon: <Star className="text-yellow-500 h-10 w-10" />,
-      category: "cosmetics",
-      isPermanent: true
-    },
-    {
-      id: "avatar-pack",
-      name: "Elite Avatar Pack",
-      description: "Unlock exclusive profile avatars",
-      price: 150,
-      icon: <User className="text-blue-500 h-10 w-10" />,
-      category: "cosmetics",
-      isPermanent: true
-    },
-    // Energy & Boosts
-    {
-      id: "energy-refill",
-      name: "Full Energy Refill",
-      description: "Instantly refill your energy to maximum",
-      price: 120,
-      icon: <Zap className="text-yellow-400 h-10 w-10" />,
-      category: "energy",
-      isPermanent: false,
-      effect: "Restores energy to 100%"
-    },
-    {
-      id: "energy-booster",
-      name: "Energy Booster",
-      description: "Double energy regeneration for 1 hour",
-      price: 80,
-      icon: <Zap className="text-purple-500 h-10 w-10" />,
-      category: "energy",
-      isPermanent: false,
-      effect: "2x energy regen for 1 hour"
-    },
-    // Special Abilities
-    {
-      id: "password-reveal",
-      name: "Password Reveal",
-      description: "Instantly solve one password puzzle",
-      price: 300,
-      icon: <Key className="text-red-500 h-10 w-10" />,
-      category: "special",
-      isPermanent: false,
-      effect: "Instantly solve one puzzle"
-    },
-    {
-      id: "similarity-boost",
-      name: "Similarity Detector",
-      description: "Improves similarity detection for 3 games",
-      price: 250,
-      icon: <Search className="text-indigo-500 h-10 w-10" />,
-      category: "special",
-      isPermanent: false,
-      effect: "Enhanced similarity detection for 3 games"
-    },
-  ];
+  const [storeItems, setStoreItems] = useState<StoreItem[]>([]);
+  const [buying, setBuying] = useState<boolean>(false);
+  const [itemToBuy, setItemToBuy] = useState<StoreItem|null>(null)
+  
+  const getIconComponent = (iconName: string) => {
+    const iconMap: { [key: string]: JSX.Element } = {
+      info: <Info className="text-indigo-500 h-10 w-10" size={24} />,
+      plus: <Plus className="text-indigo-500 h-10 w-10"size={24} />,
+      star: <Star className="text-indigo-500 h-10 w-10" size={24} />,
+      user: <User className="text-indigo-500 h-10 w-10" size={24} />,
+      zap: <Zap className="text-indigo-500 h-10 w-10" size={24} />,
+      key: <Key className="text-indigo-500 h-10 w-10" size={24} />,
+      search: <Search className="text-indigo-500 h-10 w-10" size={24} />,
+    };
+    return iconMap[iconName] || <Info size={24} />;
+  };
+  
+  useEffect(() => {
+    const fetchInventory = async () => {
+      const items: StoreItem[] = await getInventory();
+      items.forEach(item => {
+        item.icon = getIconComponent(item._icon as string);
+      });
+      setStoreItems(items);
+    };
+    fetchInventory();
+  }, []);
+
+  useEffect(() => {
+    const fetchPower = async (id) => {
+      const power = await getPower(id);
+      
+      setUserPower(power);
+    };
+    fetchPower(id);
+  }, []);
+
+  useEffect(()=>{
+    if(!buying || !itemToBuy){
+      return 
+    }
+    const buyFromServer = async ()=>{
+      const done = await purchaseItem(itemToBuy, id);
+      if(done){
+        toast({
+        title: "Purchase Successful!",
+        description: `You bought ${itemToBuy.name}`,
+        variant: "default",
+      });
+      }else{
+        toast({
+        title: "Unknown error occured",
+        description: `something went wrong with your query, repeat again later`,
+        variant: "destructive",
+      });
+      }
+    }
+
+    buyFromServer();
+
+    setBuying(false);
+
+  }, [buying])
+
 
   // Filter items by category
   const filteredItems = storeItems.filter(item => item.category === selectedTab);
 
   // Handle purchase
   const handlePurchase = (item: StoreItem) => {
+    
+    setItemToBuy(item);
+    setBuying(true);
+    
     if (points >= item.price) {
       // Deduct points
       updatePoints(-item.price);
+      setUserPower(prev => {return {energy: prev.energy, points: prev.points - item.price}})
       // Show success message
-      toast({
-        title: "Purchase Successful!",
-        description: `You bought ${item.name}`,
-        variant: "default",
-      });
+      
       // In a real app, we would update the user's inventory here
-    } else {
-      // Show error message
-      toast({
-        title: "Insufficient Funds",
-        description: `You need ${item.price - points} more points!`,
-        variant: "destructive",
-      });
     }
   };
   return (
@@ -169,7 +130,7 @@ const Store = () => {
             <Coins className="h-8 w-8 text-yellow-500" />
             <div>
               <h3 className="text-lg font-medium">Your Balance</h3>
-              <p className="text-2xl font-bold">{points} Points</p>
+              <p className="text-2xl font-bold">{userPower.points} Points</p>
             </div>
           </div>
           <Button variant="outline" className="gap-2">
@@ -201,15 +162,14 @@ const Store = () => {
           {["powerUps", "cosmetics", "energy", "special"].map((category) => (
             <TabsContent value={category} key={category} className="mt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredItems.map((item) => (
-
-                  <StoreItemCard
+                {filteredItems.map((item) => {
+                  return <StoreItemCard
                     key={item.id}
                     item={item}
                     onPurchase={handlePurchase}
                     canAfford={points >= item.price}
                   />
-                ))}
+                })}
               </div>
             </TabsContent>
           ))}

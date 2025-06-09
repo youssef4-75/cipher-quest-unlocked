@@ -1,20 +1,40 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context";
-import { getLeaderboard, getOwnRank } from "@/server/connection/leaderboard";
-
-
+import { getLeaderboard, getOwnRank } from "@/fetching/leaderboard";
+import { useToast } from "@/hooks/use-toast";
 
 const Leaderboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [filter, setFilter] = useState<'points' | 'solved'>('points');
+  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
+  const [ownRankData, setOwnRankData] = useState<any>({ rank: 0, points: 0, solved: 0 });
 
-  const sortedLeaderboard = getLeaderboard(filter);
-  const ownRank = getOwnRank(filter, user?.id);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [leaderboard, rank] = await Promise.all([
+          getLeaderboard(filter),
+          getOwnRank(filter, user?.id)
+        ]);
+        setLeaderboardData(leaderboard);
+        setOwnRankData(rank);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch leaderboard data",
+          variant: "destructive",
+        });
+      }
+    };
 
+    if (user?.id) {
+      fetchData();
+    }
+  }, [filter, user?.id]);
 
   return (
     <Layout title="Leaderboard">
@@ -46,15 +66,13 @@ const Leaderboard = () => {
               <div className="col-span-3 text-right">Puzzles Solved</div>
             </div>
 
-            {sortedLeaderboard.map((player, index) => {
-              // Determine if the row is the current user
-              const isCurrentUser = player.name === user?.name;
+            {leaderboardData.map((player, index) => {
+              const isCurrentUser = player.id === user?.id;
 
               return (
                 <div
                   key={player.id}
-                  className={`grid grid-cols-12 py-3 px-4 border-b border-border ${isCurrentUser ? 'bg-primary/10' : ''
-                    }`}
+                  className={`grid grid-cols-12 py-3 px-4 border-b border-border ${isCurrentUser ? 'bg-primary/10' : ''}`}
                 >
                   <div className="col-span-1 font-medium">#{index + 1}</div>
                   <div className="col-span-5 font-medium">
@@ -67,17 +85,16 @@ const Leaderboard = () => {
               );
             })}
 
-            {/* Current user stats (in a real app, would get inserted at correct rank position) */}
-            {ownRank.rank > 10 ?
+            {ownRankData.rank > 10 && (
               <div className="grid grid-cols-12 py-3 px-4 bg-primary/10">
-                <div className="col-span-1 font-medium">#{ownRank.rank}</div>
+                <div className="col-span-1 font-medium">#{ownRankData.rank}</div>
                 <div className="col-span-5 font-medium">
                   {user?.name} <span className="ml-2 text-xs text-primary">(You)</span>
                 </div>
-                <div className="col-span-3 text-right">{ownRank.points.toLocaleString()}</div>
-                <div className="col-span-3 text-right">{ownRank.solved}</div>
+                <div className="col-span-3 text-right">{ownRankData.points.toLocaleString()}</div>
+                <div className="col-span-3 text-right">{ownRankData.solved}</div>
               </div>
-              : <></>}
+            )}
           </CardContent>
         </Card>
 
@@ -87,19 +104,19 @@ const Leaderboard = () => {
             <Card className="cipher-card">
               <CardContent className="p-6 text-center">
                 <p className="text-sm text-muted-foreground mb-1">Global Rank</p>
-                <p className="text-4xl font-bold">#{ownRank.rank}</p> {/* Example rank */}
+                <p className="text-4xl font-bold">#{ownRankData.rank}</p>
               </CardContent>
             </Card>
             <Card className="cipher-card">
               <CardContent className="p-6 text-center">
                 <p className="text-sm text-muted-foreground mb-1">Points</p>
-                <p className="text-4xl font-bold">{ownRank.points.toLocaleString()}</p> {/* Example points */}
+                <p className="text-4xl font-bold">{ownRankData.points.toLocaleString()}</p>
               </CardContent>
             </Card>
             <Card className="cipher-card">
               <CardContent className="p-6 text-center">
                 <p className="text-sm text-muted-foreground mb-1">Puzzles Solved</p>
-                <p className="text-4xl font-bold">{ownRank.solved.toLocaleString()}</p> {/* Example solved */}
+                <p className="text-4xl font-bold">{ownRankData.solved.toLocaleString()}</p>
               </CardContent>
             </Card>
           </div>

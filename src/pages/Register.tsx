@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
+import { register } from "@/fetching/app";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register } = useAuth();
+  const { setUser } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,19 +43,19 @@ const Register = () => {
     setIsSubmitting(true);
     
     try {
-      await register(email, password, name);
-      navigate("/dashboard");
+      const userData = await register(email, password, name);
+      setUser(userData);
       toast({
         title: "Welcome to Cipher Quest!",
         description: "Your account has been created successfully.",
       });
+      navigate("/dashboard");
     } catch (error) {      
       toast({
         title: "Registration failed",
         description: "Could not create your account. Please try again.",
         variant: "destructive",
       });
-
     } finally {
       setIsSubmitting(false);
     }

@@ -3,11 +3,9 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context";
+
 
 const Index = () => {
-  const { user } = useAuth();
-
   useEffect(() => {
     document.title = "Cipher Quest - Puzzle Adventure";
   }, []);

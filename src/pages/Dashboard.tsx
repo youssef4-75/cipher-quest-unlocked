@@ -1,32 +1,51 @@
-
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useAuth, useGame } from "@/context";
 import { useToast } from "@/hooks/use-toast";
+import { LoadingGameCard } from "@/components/ui/loading-game-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Zap } from "lucide-react";
-import { getAvailableGames, notifyEntry } from '@/server/connection/dashboard'
+import { notifyEntry } from '@/fetching/dashboard'
+import { getAvailableGames } from '@/fetching/dashboard'
+import { DashboardGame } from "@/types";
 
-// Mock game data
+// Loading template component
+
 
 const Dashboard = () => {
   const { energy, updateEnergy } = useGame();
   const { toast } = useToast();
-  const [filter, setFilter] = useState("all");
   const { user: { id } } = useAuth();
-  const availableGames = getAvailableGames(id);
-
+  const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [availableGames, setAvailableGames] = useState<DashboardGame[]>([]);
+  const [filteredGames, setFilteredGames] = useState<DashboardGame[]>([]);
+  const navigate = useNavigate();
   
-  const filteredGames = filter === "all"
+  useEffect(() => {
+    getAvailableGames(id).then(
+      data => {
+        setAvailableGames(data);
+        setLoading(false);
+      }
+    ).catch(error => {
+      console.error("Error fetching games:", error);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    const __filteredGames = filter === "all"
     ? availableGames
     : filter === "daily"
       ? availableGames.filter(game => game.isDaily)
       : availableGames.filter(game => game.difficulty.toLowerCase() === filter.toLowerCase());
+    setFilteredGames(__filteredGames);
+  }, [availableGames, filter]);
 
-  const handleGameStart = (gameId: string, energyCost: number) => {
-    notifyEntry(gameId, id);
+  const handleGameStart = async (gameId: string, energyCost: number) => {
     if (energy < energyCost) {
       toast({
         title: "Not enough energy",
@@ -36,9 +55,27 @@ const Dashboard = () => {
       return;
     }
 
-    updateEnergy(-energyCost);
+    setLoading(true);
+    try {
+      // First notify the server about entry
+      await notifyEntry(gameId, id);
+      // Then notify local server
+      // ne(gameId, id);
+      // Update energy
+      updateEnergy(-energyCost);
+      // Navigate to game
+      navigate(`/gameplay/${gameId}`);
+    } catch (error) {
+      console.error("Error starting game:", error);
+      toast({
+        title: "Error",
+        description: "Failed to start the game. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-
 
   return (
     <Layout title="Game Selection">
@@ -71,65 +108,77 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredGames.map((game) => (
-          <Card key={game.id} className="cipher-card overflow-hidden flex flex-col animate-fade-in">
-            <div className="relative h-48 w-full overflow-hidden">
-              <img
-                src={game.image}
-                alt={game.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-3 right-3 bg-card/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
-                {game.theme}
-              </div>
-              <div className="absolute top-10 right-3 bg-card/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
-                {game.difficulty}
-              </div>
-              {game.isDaily && (
-                <div className="absolute top-3 left-3 bg-primary/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
-                  Daily Challenge
+        {loading ? (
+          // Show loading templates while data is being fetched
+          [...Array(6)].map((_, index) => (
+            <LoadingGameCard key={index} />
+          ))
+        ) : (
+          filteredGames.map((game) => (
+            <Card key={game.id} className="cipher-card overflow-hidden flex flex-col animate-fade-in">
+              <div className="relative h-48 w-full overflow-hidden">
+                <img
+                  src={game.image}
+                  alt={game.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-3 right-3 bg-card/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
+                  {game.theme}
                 </div>
-              )}
-              {game.preDone && (
-                <div className="absolute top-3 left-3 bg-primary/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
-                  reward already claimed
+                <div className="absolute top-10 right-3 bg-card/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
+                  {game.difficulty}
                 </div>
-              )}
-            </div>
+                {game.isDaily && (
+                  <div className="absolute top-3 left-3 bg-primary/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
+                    Daily Challenge
+                  </div>
+                )}
+                {game.preDone && (
+                  <div className="absolute top-3 left-3 bg-primary/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
+                    reward already claimed
+                  </div>
+                )}
+              </div>
 
-            <div className="p-5 flex-grow flex flex-col">
-              <h3 className="font-bold text-xl mb-2">{game.title}</h3>
-              <p className="text-sm text-muted-foreground mb-4 flex-grow">{game.description}</p>
+              <div className="p-5 flex-grow flex flex-col">
+                <h3 className="font-bold text-xl mb-2">{game.title}</h3>
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">{game.description}</p>
 
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className="text-center p-2 bg-card rounded-md">
-                  <div className="text-xs text-muted-foreground">Energy</div>
-                  <div className="font-medium flex items-center justify-center">
-                    <Zap className="h-3 w-3 text-yellow-400 mr-1" />
-                    {game.energyCost}
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  <div className="text-center p-2 bg-card rounded-md">
+                    <div className="text-xs text-muted-foreground">Energy</div>
+                    <div className="font-medium flex items-center justify-center">
+                      <Zap className="h-3 w-3 text-yellow-400 mr-1" />
+                      {game.energyCost}
+                    </div>
+                  </div>
+                  <div className="text-center p-2 bg-card rounded-md">
+                    <div className="text-xs text-muted-foreground">Attempts</div>
+                    <div className="font-medium">{game.maxAttempts}</div>
+                  </div>
+                  <div className="text-center p-2 bg-card rounded-md">
+                    <div className="text-xs text-muted-foreground">Phases</div>
+                    <div className="font-medium">{game.phases}</div>
+                  </div>
+                  <div className="text-center p-2 bg-card rounded-md">
+                    <div className="text-xs text-muted-foreground">Time</div>
+                    <div className="font-medium">{game.timed ? game.timeLimit : "∞"}</div>
                   </div>
                 </div>
-                <div className="text-center p-2 bg-card rounded-md">
-                  <div className="text-xs text-muted-foreground">Attempts</div>
-                  <div className="font-medium">{game.maxAttempts}</div>
-                </div>
-                <div className="text-center p-2 bg-card rounded-md">
-                  <div className="text-xs text-muted-foreground">Phases</div>
-                  <div className="font-medium">{game.phases}</div>
-                </div>
-              </div>
 
-              <Link to={`/gameplay/${game.id}`} onClick={() => handleGameStart(game.id, game.energyCost)}>
                 <Button
                   className="w-full"
-                  disabled={energy < game.energyCost || !game.playable}
+                  disabled={energy < game.energyCost || !game.playable || loading}
+                  onClick={() => handleGameStart(game.id, game.energyCost)}
                 >
-                  {energy < game.energyCost ? "Not Enough Energy" : game.playable ? "Play Now" : "Another game is unfinished"}
+                  {loading ? "Loading..." : 
+                   energy < game.energyCost ? "Not Enough Energy" : 
+                   game.playable ? "Play Now" : "Another game is unfinished"}
                 </Button>
-              </Link>
-            </div>
-          </Card>
-        ))}
+              </div>
+            </Card>
+          ))
+        )}
       </div>
     </Layout>
   );

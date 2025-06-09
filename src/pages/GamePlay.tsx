@@ -8,15 +8,19 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, 
+    DialogTitle, DialogDescription, DialogFooter 
+} from "@/components/ui/dialog";
 import { HelpCircle, Info, Grab } from "lucide-react";
-import { generateHint, getGames, highlightPassword, notifyLoss, submitAnswer } from '@/server/connection/game_play';
+import { generateHint , getGames,  highlightPassword,
+  notifyLoss, submitAnswer } from '@/fetching/game_play';
 import { ViewGame } from "@/types";
-
-
 
 // Cost of using a hint
 const HINT_COST = 5;
+
+const ranPosGenerator = (max: number, min: number) => Math.round(Math.random() * (max - min)) + min;
+const randomPos = () => ({ top: ranPosGenerator(70, 0), left: ranPosGenerator(70, 0) });
 
 const GamePlay = () => {
   const { gameId } = useParams<{ gameId: string }>();
@@ -26,54 +30,78 @@ const GamePlay = () => {
 
 
   const [game, setGame] = useState<ViewGame | null>(null);
-  const [timer, setTimer] = useState<number>(0);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [lostReason, setLostReason] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [reward, setReward] = useState("");
   const [gameStatus, setGameStatus] = useState<"playing" | "won" | "lost">("playing");
+  
+  const [timer, setTimer] = useState<number>(0);
+  
   const [draggedMsg, setDraggedMsg] = useState<number | null>(null);
-  const [msgPositions, setMsgPositions] = useState<{ [key: number]: { top: number, left: number } }>();
+  const [msgPositions, setMsgPositions] = useState<{ [key: number]: { top: number, left: number } }>({});
+  const [isMouseFollowing, setIsMouseFollowing] = useState(false);
+  const [animationParams, setAnimationParams] = useState<{ [key: number]: { 
+    translateX: number, 
+    translateY: number, 
+    rotate: number,
+    duration: number 
+  } }>({});
+  
   const [revealedHint, setRevealedHint] = useState<string | null>(null);
-  const [infoDialogOpen, setInfoDialogOpen] = useState(true);
   const [similarityScore, setSimilarityScore] = useState<number | null>(null);
   const [incorrectAttempts, setIncorrectAttempts] = useState<string[]>([]);
-  const [isMouseFollowing, setIsMouseFollowing] = useState(false);
+  const [highlighted, setHighlighted] = useState<JSX.Element>()
+  const [hintText, setHintText] = useState<string>("");
+  
+  const [infoDialogOpen, setInfoDialogOpen] = useState(true);
+  
+  const [debugging, setDeugging] = useState<string>("")
+  
   const { user: { id } } = useAuth();
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [highlightedAttempts, setHighlightedAttempts] = useState<JSX.Element[]>([]);
 
   useEffect(() => {
-
     // Get game data
-    const selectedGame: ViewGame = getGames(gameId, id);
+    const fetchGame = async () => {
+      const selectedGame: ViewGame = await getGames(gameId, id);
 
+      if (selectedGame !== null) {
+        setGame(selectedGame);
 
-    if (selectedGame !== null) {
-      setGame(selectedGame);
+        // Initialize message positions from game data
+        const initialPositions: { [key: number]: { top: number, left: number } } = {};
+        
+        // Make sure we have messages to initialize
+        if (selectedGame.phase && selectedGame.phase.messages) {
+          selectedGame.phase.messages.forEach(msg => {
+            if (msg && msg.id) {
+              initialPositions[msg.id] = randomPos();
+            }
+          });
+          
+          // Set the states with the initialized values
+          setMsgPositions(initialPositions);
+        }
+      } else {
+        toast({
+          title: "Game not found",
+          description: "The game you're looking for doesn't exist.",
+          variant: "destructive",
+        });
+        navigate("/dashboard");
+      }
+    };
 
-
-
-      // Initialize message positions from game data
-      const initialPositions: { [key: number]: { top: number, left: number } } = {};
-      selectedGame.phase.messages.forEach(msg => {
-        initialPositions[msg.id] = msg.position;
-      });
-      setMsgPositions(initialPositions);
-    } else {
-      toast({
-        title: "Game not found",
-        description: "The game you're looking for doesn't exist.",
-        variant: "destructive",
-      });
-      navigate("/dashboard");
-    }
+    fetchGame();
   }, [gameId]);
 
-  const Surrender = () => {
-    notifyLoss(gameId, id);
+  const Surrender = async () => {
+    await notifyLoss(gameId, id);
     setGameStatus("lost");
     setLostReason("Surrendering");
   }
@@ -178,25 +206,16 @@ const GamePlay = () => {
     navigate("/dashboard");
   };
 
-  const handleSubmit = () => {
-    // to avoid any attempt of cheating, the server is carged to keep track 
-    // of the user attempts and everything related to that, like counting 
-    // left attempts, revealing hints, and so on ...
-    // Send a password in a game to the 
-    // server to verify it, it will return the 
-    // similarity level and the highlighted password
-
-
-
+  const handleSubmit = async () => {
     if (!game) return;
 
-    const { state, res } = submitAnswer(id, password, revealedHint);
+    const { state, res } = await submitAnswer(id, password, revealedHint);
+    
 
     if (["win", "next"].includes(state)) {
       // Password is correct
       setCurrentPhase(prev => prev + 1);
       if (state === 'win') {
-
         // Game completed
         setGameStatus("won");
         updatePoints(game.difficulty === "Easy" ? 20 : game.difficulty === "Medium" ? 40 : 60);
@@ -223,8 +242,8 @@ const GamePlay = () => {
         });
 
         setTimer(0);
-        setGame(getGames(gameId, id));
-
+        const updatedGame = await getGames(gameId, id);
+        setGame(updatedGame);
 
         setPassword("");
         setRevealedHint(null);
@@ -234,7 +253,7 @@ const GamePlay = () => {
         // Initialize positions for the next phase
         const nextInitialPositions: { [key: number]: { top: number, left: number } } = {};
         game.phase.messages.forEach(msg => {
-          nextInitialPositions[msg.id] = msg.position;
+          nextInitialPositions[msg.id] = randomPos();
         });
         setMsgPositions(nextInitialPositions);
       }
@@ -244,7 +263,6 @@ const GamePlay = () => {
       const { sim } = res;
 
       // Calculate similarity score
-
       setSimilarityScore(sim);
 
       // Save the incorrect attempt for highlighting
@@ -275,11 +293,16 @@ const GamePlay = () => {
   };
 
 
-
-  const useHint = () => {
+  const useHint = async () => {
     if (!game) return;
-    const hintText = generateHint(gameId, id, revealedHint);
+    const _htext = await generateHint(gameId, id, revealedHint);
+    setHintText(_htext);
+  };
 
+  useEffect(() => {
+    if (hintText == "") {
+      return
+    }
     if (hintText === null) {
       toast({
         title: "Not enough points",
@@ -295,38 +318,40 @@ const GamePlay = () => {
       title: "Hint Revealed",
       description: `You've spent ${HINT_COST} points to reveal a hint.`,
     });
-  };
-
+  }, [hintText])
+  
   // Add timer effect
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
+    let intervalIdTimer: NodeJS.Timeout;
 
     if (gameStatus === "playing" && !infoDialogOpen) {
-      intervalId = setInterval(() => {
+      intervalIdTimer = setInterval(() => {
         setTimer(prev => prev + 1);
       }, 1000);
     }
 
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      if (intervalIdTimer) {
+        clearInterval(intervalIdTimer);
+      } 
     };
   }, [gameStatus, infoDialogOpen]);
 
   // Check if the game is over by time limit exceeded
   useEffect(() => {
-    if (game && timer >= game.timeLimit) {
-      notifyLoss(gameId, id);
-      setGameStatus("lost");
-      setLostReason("exceeding the time limit");
+    if (game && game.timed && timer >= game.timeLimit) {
+      const handleTimeLimit = async () => {
+        await notifyLoss(gameId, id);
+        setGameStatus("lost");
+        setLostReason("exceeding the time limit");
 
-      toast({
-        title: "Game Over",
-        description: "You've run out of time.",
-        variant: "destructive",
-      });
+        toast({
+          title: "Game Over",
+          description: "You've run out of time.",
+          variant: "destructive",
+        });
+      };
+      handleTimeLimit();
     }
   }, [game, timer]);
 
@@ -345,6 +370,69 @@ const GamePlay = () => {
     }
     return "bg-green-500";
   };
+
+  // Add this new useEffect for random animation parameters
+  useEffect(() => {
+    if (!game?.phase?.messages) return;
+
+    const updateAnimationParams = () => {
+      const newParams: { [key: number]: { 
+        translateX: number, 
+        translateY: number, 
+        rotate: number,
+        duration: number 
+      } } = {};
+      game.phase.messages.forEach(msg => {
+        if (msg?.id) {
+          newParams[msg.id] = {
+            translateX: Math.random() * 40 - 20,
+            translateY: Math.random() * 40 - 20,
+            rotate: Math.random() * 4 - 2,
+            duration: Math.random() * 2 + 1 // Random duration between 1 and 3 seconds
+          };
+        }
+      });
+      setAnimationParams(newParams);
+    };
+
+    // Initial update
+    updateAnimationParams();
+
+    // Update every 2 seconds
+    const interval = setInterval(updateAnimationParams, 2000);
+
+    return () => clearInterval(interval);
+  }, [game?.phase?.messages]);
+
+  // Add new useEffect to handle only new attempts
+  useEffect(() => {
+    const processNewAttempt = async () => {
+      if (incorrectAttempts.length > 0) {
+        // Get only the latest attempt
+        const latestAttempt = incorrectAttempts[incorrectAttempts.length - 1];
+        
+        // Process only the new attempt
+        
+        const highlightedArray = await highlightPassword(latestAttempt, gameId, id);
+        console.log(highlightedArray);
+        const newHighlightedElement = (
+          <span key={latestAttempt}>
+            {highlightedArray && highlightedArray.map((item) => (
+              <span key={item.key} style={{ color: (item.color|| 'blue') }}>
+                {item.letter}
+              </span>
+            ))}
+          </span>
+        );
+
+
+        // Add the new highlighted attempt to the existing ones
+        setHighlightedAttempts(prev => [...prev, newHighlightedElement]);
+      }
+    };
+
+    processNewAttempt();
+  }, [incorrectAttempts.length]); // Only trigger when the number of attempts changes
 
   if (!game) {
 
@@ -409,13 +497,14 @@ const GamePlay = () => {
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Time</span>
-              <h3 className="font-medium">{formatTime(game.timeLimit - timer)}</h3>
+              <h3 className="font-medium">{game.timed ? formatTime(game.timeLimit - timer) : "∞"}</h3>
             </div>
           </div>
+          {game.timed && 
           <Progress
             value={((game.timeLimit - timer) / game.timeLimit) * 100}
             className={`h-2 mb-3 ${getProgressColor(game.timeLimit - timer, game.timeLimit)}`}
-          />
+          />}
           <Progress value={(currentPhase / game.length) * 100} className="h-2" />
         </div>
 
@@ -449,7 +538,7 @@ const GamePlay = () => {
                 </Popover>
               </div>
               <p className="text-sm mb-3">
-                {game.phase.description}
+                {game.phase.description} have a debugging msg: {debugging}
               </p>
               {revealedHint && (
                 <div className="bg-secondary/50 p-2 rounded-md mb-2 text-sm">
@@ -457,7 +546,7 @@ const GamePlay = () => {
                 </div>
               )}
               <div className="text-xs text-muted-foreground">
-                Arrange the messages in the correct order and enter the password below.
+                Arrange the messages in the correct order and enter the password below. 
                 Pay attention to the numbers they are everything.
               </div>
 
@@ -469,13 +558,13 @@ const GamePlay = () => {
               )}
 
               {/* Last incorrect attempts with highlighting */}
-              {incorrectAttempts.length > 0 && game.maxAttempts - attempts <= 2 && (
+              {incorrectAttempts.length > 0 && (
                 <div className="mt-2 space-y-1">
                   <p className="text-xs text-muted-foreground">Previous attempts:</p>
                   <div className="space-y-1">
-                    {incorrectAttempts.map((attempt, index) => (
+                    {highlightedAttempts.map((highlightedElement, index) => (
                       <div key={index} className="text-sm p-1 bg-secondary/20 rounded">
-                        {highlightPassword(attempt, gameId, id)}
+                        {highlightedElement}
                       </div>
                     ))}
                   </div>
@@ -498,7 +587,9 @@ const GamePlay = () => {
                     top: `${msgPositions?.[message?.id]?.top || 0}%`,
                     left: `${msgPositions?.[message?.id]?.left || 0}%`,
                     zIndex: draggedMsg === message?.id ? 10 : 1,
-                    cursor: isMouseFollowing && draggedMsg === message?.id ? "grabbing" : "grab"
+                    cursor: isMouseFollowing && draggedMsg === message?.id ? "grabbing" : "grab",
+                    transform: `translate(${animationParams[message?.id]?.translateX || 0}px, ${animationParams[message?.id]?.translateY || 0}px) rotate(${animationParams[message?.id]?.rotate || 0}deg)`,
+                    transition: `transform ${animationParams[message?.id]?.duration || 2}s ease-in-out`
                   }}
                   onMouseDown={(e) => handleDragStart(e, message?.id)}
                 >

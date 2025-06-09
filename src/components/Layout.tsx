@@ -5,7 +5,7 @@ import { useAuth, useGame } from "@/context";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Trophy, User, Home, LogOut, Zap } from "lucide-react";
-import { getPower } from "@/server/connection/profile";
+
 
 type LayoutProps = {
   children: ReactNode;
@@ -17,7 +17,8 @@ const Layout = ({ children, title = "Cipher Quest", active=true }: LayoutProps) 
   const { user, logout } = useAuth();
   const { toast } = useToast();
   
-  const { energy, points } = getPower(user?.id);
+  
+  const {energy, points} = useGame()
   
   const handleLogout = () => {
     logout();

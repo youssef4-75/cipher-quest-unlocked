@@ -9,34 +9,27 @@ export type User = {
   name: string;
 } | null;
 
+export type PartialGame = {
+    title: string;
+    description: string;
+    energyCost: number;
+    timed: boolean;
+    maxAttempts: number;
+    timeLimit: number;
+    length: number;
+    difficulty: 'Easy' | 'Medium' | 'Hard' | 'Expert' | 'Varies';
+    detailedDescription: string;
+    phase: {
+        description: string;
+        messages: {
+            id: number;
+            text: string;
+            hash: number;
+            position: { top: number, left: number };
+        }[];
+        explanation: string;
+    };    
 
-export type UserData = UserDataPrivate & {
-  password: string;
-}
-
-export type UserDataPrivate = {
-  name: string;
-  auth_mail: string;
-  winStreak: number;
-  level: number;
-  themes: Record<string, number>;
-  energy: number;
-  points: number;
-  collectedPwd: string[];
-  memberSince: string;
-  totalGamePlayed: number;
-  accomplishedMission: number;
-  wellAttempts: number; // the number of correct attempts
-  totalAttempts: number;
-  longestStreak: number; // successive mission accomplished
-  phaseSolved: number;
-  currentGame: {
-    gameId: string | null;
-    phase: number | null;
-    attempt: number | null;
-    startTime: number | null;
-    entryTimes: number | null;
-  };
 }
 
 export type AuthContextType = {
@@ -45,6 +38,7 @@ export type AuthContextType = {
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
+  setUser: (_: any) => void
 };
 
 // Game context
@@ -62,6 +56,7 @@ export type ViewGame = {
   title: string;
   description: string;
   energyCost: number;
+  timed: boolean;
   maxAttempts: number;
   timeLimit: number;
   length: number;
@@ -73,9 +68,40 @@ export type ViewGame = {
       id: number;
       text: string;
       hash: number;
-      position: { top: number, left: number };
     }[];
     explanation: string;
   };
 
+}
+
+export type DashboardGame = {
+    id: string;
+    title: string;
+    description: string;
+    image: string;
+    timeLimit: number;
+    timed: boolean;
+    energyCost: number;
+    maxAttempts: number;
+    phases: number;
+    difficulty: "Easy" | "Medium" | "Hard" | "Expert" | "Varies";
+    preDone: boolean;
+    theme: string;
+    isDaily: boolean;
+    playable: boolean;
+}
+
+
+export type ItemCategory = "powerUps" | "cosmetics" | "energy" | "special"
+
+export type StoreItem = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  _icon: string;
+  icon: JSX.Element|null;
+  category: ItemCategory;
+  isPermanent: boolean;
+  
 }

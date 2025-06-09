@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState, createContext, useContext, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -14,10 +14,11 @@ import Leaderboard from "./pages/Leaderboard";
 import GamePlay from "./pages/GamePlay";
 import Store from "./pages/Store";
 
-import { energyRecovery, loginUserC as loginUser, registerUserC as registerUser } from "./server/connection/app";
+import { energyRecovery, loginUserC as loginUser, registerUserC as registerUser } from "./fetching/app";
 import { AuthContextType, GameContextType, User } from "./types";
 import { AuthContext, GameContext, useGame as ug } from "./context";
-import { getProfile } from "./server/connection/profile";
+import { getProfile } from "./fetching/profile";
+import { toast } from "./hooks/use-toast";
 
 
 
@@ -58,12 +59,16 @@ const App = () => {
 
   // Save game data when it changes
   useEffect(() => {
-    if (user) {
-      const { energy, points, solvedPasswords } = getProfile(user.id);
-      localStorage.setItem('cipher_energy', energy.toString());
-      localStorage.setItem('cipher_points', points.toString());
-      localStorage.setItem('cipher_passwords', JSON.stringify(solvedPasswords));
-    }
+    const saveGameData = async () => {
+      if (user) {
+        const { energy, points, solvedPasswords } = await getProfile(user.id);
+        localStorage.setItem('cipher_energy', energy.toString());
+        localStorage.setItem('cipher_points', points.toString());
+        localStorage.setItem('cipher_passwords', JSON.stringify(solvedPasswords));
+      }
+    };
+    
+    saveGameData();
   }, [energy, points, solvedPasswords, user]);
 
   // Energy regeneration effect (1 energy every 30 seconds, up to 100)
@@ -94,7 +99,7 @@ const App = () => {
       localStorage.setItem('cipher_user', JSON.stringify({ id: key, name, email }));
     } catch (error) {
       console.error('Registration failed', error);
-      throw error;
+      
     } finally {
       setLoading(false);
     }
@@ -105,21 +110,38 @@ const App = () => {
     setLoading(true);
 
     try {
-
       // In a real app, we would verify credentials with the backend
-      const { energy, points, solvedPasswords, ...user } = await loginUser(email, password)
+      const loginData = await loginUser(email, password, toast);
+      if(loginData === null) {
+        setUser(null);
+        localStorage.removeItem('cipher_user');
+        setEnergy(100);
+        setPoints(100);
+        setSolvedPasswords([]);
+        return 
+      }
+      const { energy, points, solvedPasswords, ...user } = loginData
+      
+   
+
       setUser(user);
       localStorage.setItem('cipher_user', JSON.stringify(user));
       setEnergy(energy);
       setPoints(points);
       setSolvedPasswords(solvedPasswords);
     } catch (error) {
-      console.error('Login failed', error);
-      throw error;
+      console.error('Login failed', error); // reason of the error appearing the console
+      // Reset any partial state changes
+      setUser(null);
+      localStorage.removeItem('cipher_user');
+      setEnergy(100);
+      setPoints(100);
+      setSolvedPasswords([]);
     } finally {
       setLoading(false);
     }
   };
+
 
   const logout = () => {
     setUser(null);
@@ -152,6 +174,7 @@ const App = () => {
     register,
     logout,
     loading,
+    setUser: (user: any) => {}
   };
 
   // Game context value
