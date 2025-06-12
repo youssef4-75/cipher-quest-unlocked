@@ -115,7 +115,7 @@ const Dashboard = () => {
           ))
         ) : (
           filteredGames.map((game) => (
-            <Card key={game.id} className="cipher-card overflow-hidden flex flex-col animate-fade-in">
+              <Card key={game.id} className="cipher-card overflow-hidden flex flex-col animate-fade-in">
               <div className="relative h-48 w-full overflow-hidden">
                 <img
                   src={game.image}
