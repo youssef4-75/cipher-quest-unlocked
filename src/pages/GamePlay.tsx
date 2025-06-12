@@ -515,14 +515,14 @@ const GamePlay = () => {
                 <div className="flex items-center gap-2">
                   <Info className="h-4 w-4 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    Phase {currentPhase + 1} Description:
+                    Security Layer {currentPhase + 1} Analysis:
                   </p>
                 </div>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm" className="h-8">
                       <HelpCircle className="h-4 w-4 mr-1" />
-                      Game Info
+                      Target Info
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent>
@@ -530,40 +530,51 @@ const GamePlay = () => {
                       <h4 className="font-medium mb-1">{game.title}</h4>
                       <p className="text-sm mb-2">{game.description}</p>
                       <div className="text-xs text-muted-foreground">
-                        <p>Difficulty: {game.difficulty}</p>
-                        <p>Energy Cost: {game.energyCost}</p>
+                        <p>Security Level: {game.difficulty}</p>
+                        <p>CPU Load: {game.energyCost}</p>
                       </div>
                     </div>
                   </PopoverContent>
                 </Popover>
               </div>
               <p className="text-sm mb-3">
-                {game.phase.description} have a debugging msg: {debugging}
+                {game.phase.description}
               </p>
               {revealedHint && (
                 <div className="bg-secondary/50 p-2 rounded-md mb-2 text-sm">
-                  <span className="font-medium">Hint:</span> The Password is{revealedHint}
+                  <span className="font-medium">Decrypted Data:</span> {revealedHint}
                 </div>
               )}
               <div className="text-xs text-muted-foreground">
-                Arrange the messages in the correct order and enter the password below. 
-                Pay attention to the numbers they are everything.
+                Analyze the encrypted messages and reconstruct the password. The sequence of numbers is crucial for bypassing this security layer.
               </div>
 
               {/* Similarity Score Display */}
               {similarityScore !== null && (
                 <div className="mt-3 p-2 bg-secondary/30 rounded-md">
-                  <p className="text-sm font-medium">Similarity Score: {similarityScore}%</p>
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <span className="text-cipher-300">Decryption Match:</span>
+                    <span className="font-mono">{similarityScore}%</span>
+                  </p>
+                  <div className="w-full bg-card/50 h-1.5 rounded-full mt-1">
+                    <div 
+                      className="h-full rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500"
+                      style={{ width: `${similarityScore}%` }}
+                    />
+                  </div>
                 </div>
               )}
 
               {/* Last incorrect attempts with highlighting */}
               {incorrectAttempts.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  <p className="text-xs text-muted-foreground">Previous attempts:</p>
-                  <div className="space-y-1">
+                <div className="mt-4 space-y-2">
+                  <p className="text-xs text-muted-foreground flex items-center gap-2">
+                    <span className="text-cipher-300">Previous Decryption Attempts:</span>
+                    <span className="font-mono">{incorrectAttempts.length}/{game.maxAttempts}</span>
+                  </p>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
                     {highlightedAttempts.map((highlightedElement, index) => (
-                      <div key={index} className="text-sm p-1 bg-secondary/20 rounded">
+                      <div key={index} className="text-sm p-2 bg-card/30 rounded font-mono">
                         {highlightedElement}
                       </div>
                     ))}
@@ -605,12 +616,12 @@ const GamePlay = () => {
             <div className="flex flex-col gap-4">
               <div className="flex gap-4">
                 <Input
-                  placeholder="Enter the password"
+                  placeholder="Enter decryption key"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="flex-grow bg-background border-input"
                 />
-                <Button onClick={e => handleSubmit()}>Submit</Button>
+                <Button onClick={e => handleSubmit()}>Decrypt</Button>
               </div>
               <div className="flex justify-center">
                 <Button
@@ -619,37 +630,47 @@ const GamePlay = () => {
                   disabled={points < HINT_COST}
                   className="text-sm"
                 >
-                  Use Hint ({HINT_COST} Points)
+                  Decrypt Hint ({HINT_COST} Points)
                 </Button>
                 <Button
                   variant="outline"
                   onClick={Surrender}
                   className="text-sm ml-4"
                 >
-                  Surrender
+                  Abort Mission
                 </Button>
               </div>
             </div>
           </>
         ) : gameStatus === "won" ? (
-          <div className="text-center p-10 cipher-card">
-            <h2 className="text-2xl font-bold mb-4 glow-text">Congratulations!</h2>
-            <p className="mb-6">You successfully solved all the puzzles
-              and completed <span className="text-green-500 font-bold glow-text">{game.title}</span>.
+          <Card className="p-6 text-center cipher-card">
+            <h2 className="text-2xl font-bold mb-4">System Breached Successfully!</h2>
+            <p className="text-muted-foreground mb-4">
+              You've successfully bypassed all security layers and gained access to the target system.
             </p>
-            <p className="mb-6">
-              <span className="text-blue-500 font-bold glow-text">{reward}</span>:
-              Achieved
+            <p className="text-sm mb-6">
+              Reward: {game.difficulty === "Easy" ? 20 : game.difficulty === "Medium" ? 40 : 60} points
+              <br />
+              Decrypted Password: {reward}
             </p>
-
-            <Button onClick={resetGame}>Return to Dashboard</Button>
-          </div>
+            <Button onClick={() => navigate("/dashboard")}>
+              Return to Mission Control
+            </Button>
+          </Card>
         ) : (
-          <div className="text-center p-10 cipher-card">
-            <h2 className="text-2xl font-bold mb-4 text-destructive">Game Over</h2>
-            <p className="mb-6">You lost by {lostReason}. Better luck next time!</p>
-            <Button onClick={resetGame} variant="outline">Return to Dashboard</Button>
-          </div>
+          <Card className="p-6 text-center cipher-card">
+            <h2 className="text-2xl font-bold mb-4">Mission Failed</h2>
+            <p className="text-muted-foreground mb-4">
+              {lostReason === "timeout" 
+                ? "The target system detected our presence and changed its security protocols."
+                : lostReason === "surrendered"
+                ? "Mission aborted by operator."
+                : "Maximum decryption attempts reached. The system has locked us out."}
+            </p>
+            <Button onClick={() => navigate("/dashboard")}>
+              Return to Mission Control
+            </Button>
+          </Card>
         )}
       </div>
     </Layout>

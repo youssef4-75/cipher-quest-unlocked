@@ -85,8 +85,6 @@ const App = () => {
 
   const register = async (email: string, password: string, name: string) => {
     setLoading(true);
-
-
     try {
       // call a function that register the user in the database 
       const key = await registerUser(email, password, name)
@@ -95,7 +93,7 @@ const App = () => {
       setSolvedPasswords([]);
 
       setUser({ id: key, name, email })
-
+      
       localStorage.setItem('cipher_user', JSON.stringify({ id: key, name, email }));
     } catch (error) {
       console.error('Registration failed', error);

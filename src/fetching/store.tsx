@@ -17,6 +17,6 @@ export async function sendUseDemand(item_to_use: {
 
 
 export async function purchaseItem(item_to_buy, token: string): Promise<boolean> {
-    const result = await sendRequest('purchase', {item_to_buy, token}, 'POST')
+    const result = await sendRequest('purchase', {item_to_buy, token}, 'PUT')
     return result!.data;
 }

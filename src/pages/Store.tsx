@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/tabs";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 import {
   Coins,
@@ -122,58 +123,91 @@ const Store = () => {
     }
   };
   return (
-    <Layout title="Store">
-      <div className="max-w-6xl mx-auto">
-        {/* Player balance */}
-        <div className="flex items-center justify-between mb-6 p-4 bg-card/70 backdrop-blur-sm rounded-lg border border-cipher-400/30">
-          <div className="flex items-center gap-3">
-            <Coins className="h-8 w-8 text-yellow-500" />
+    <Layout title="Black Market" infoText="Welcome to the underground marketplace. Here you can acquire tools, exploits, and resources to enhance your hacking capabilities. Choose wisely, as each purchase could be the difference between success and failure in your next mission.">
+      <div className="mb-8">
+        <Card className="p-4 cipher-card">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium">Your Balance</h3>
-              <p className="text-2xl font-bold">{userPower.points} Points</p>
+              <h3 className="text-lg font-semibold mb-1">Available Credits</h3>
+              <p className="text-2xl font-bold text-cipher-300">{userPower.points}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Last Transaction</p>
+              <p className="text-sm font-mono">{new Date().toLocaleString()}</p>
             </div>
           </div>
-          <Button variant="outline" className="gap-2">
-            <Gift size={18} />
-            <span>Earn More</span>
-          </Button>
-        </div>
-        {/* Store categories */}
-        <Tabs defaultValue="powerUps" className="w-full" onValueChange={(value) => setSelectedTab(value as ItemCategory)}>
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="powerUps" className="flex items-center gap-2">
-              <Star size={16} />
-              <span className="hidden sm:inline">Power-Ups</span>
-            </TabsTrigger>
-            <TabsTrigger value="cosmetics" className="flex items-center gap-2">
-              <ShoppingBag size={16} />
-              <span className="hidden sm:inline">Cosmetics</span>
-            </TabsTrigger>
-            <TabsTrigger value="energy" className="flex items-center gap-2">
-              <Zap size={16} />
-              <span className="hidden sm:inline">Energy & Boosts</span>
-            </TabsTrigger>
-            <TabsTrigger value="special" className="flex items-center gap-2">
-              <Gift size={16} />
-              <span className="hidden sm:inline">Special</span>
-            </TabsTrigger>
-          </TabsList>
-          {/* Items grid */}
-          {["powerUps", "cosmetics", "energy", "special"].map((category) => (
-            <TabsContent value={category} key={category} className="mt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredItems.map((item) => {
-                  return <StoreItemCard
-                    key={item.id}
-                    item={item}
-                    onPurchase={handlePurchase}
-                    canAfford={points >= item.price}
-                  />
-                })}
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <Button
+          onClick={() => setSelectedTab("powerUps")}
+          variant={selectedTab === "powerUps" ? "default" : "outline"}
+          className="h-auto py-3"
+        >
+          <div className="text-center">
+            <div className="text-lg mb-1">⚡</div>
+            <div>Exploits</div>
+          </div>
+        </Button>
+        <Button
+          onClick={() => setSelectedTab("cosmetics")}
+          variant={selectedTab === "cosmetics" ? "default" : "outline"}
+          className="h-auto py-3"
+        >
+          <div className="text-center">
+            <div className="text-lg mb-1">🎭</div>
+            <div>Disguises</div>
+          </div>
+        </Button>
+        <Button
+          onClick={() => setSelectedTab("energy")}
+          variant={selectedTab === "energy" ? "default" : "outline"}
+          className="h-auto py-3"
+        >
+          <div className="text-center">
+            <div className="text-lg mb-1">🔋</div>
+            <div>Power Sources</div>
+          </div>
+        </Button>
+        <Button
+          onClick={() => setSelectedTab("special")}
+          variant={selectedTab === "special" ? "default" : "outline"}
+          className="h-auto py-3"
+        >
+          <div className="text-center">
+            <div className="text-lg mb-1">💎</div>
+            <div>Rare Tools</div>
+          </div>
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredItems.map((item) => (
+          <Card key={item.id} className="cipher-card overflow-hidden">
+            <div className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-bold text-lg">{item.name}</h3>
+                <div className="text-sm font-mono bg-card/50 px-2 py-1 rounded">
+                  {item.isPermanent ? "Permanent" : "One-time Use"}
+                </div>
               </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+              <p className="text-sm text-muted-foreground mb-4">{item.description}</p>
+              <div className="flex justify-between items-center">
+                <div className="text-sm font-mono">
+                  <span className="text-cipher-300">{item.price}</span> credits
+                </div>
+                <Button
+                  onClick={() => handlePurchase(item)}
+                  disabled={points < item.price}
+                  size="sm"
+                >
+                  Acquire
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
     </Layout>
   );

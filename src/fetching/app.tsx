@@ -2,7 +2,7 @@ import { sendRequest } from "./connect";
 
 export async function registerUserC(email: string, password: string, name: string) {
     // in real app, these data will be sent to the server and the server will return a response
-    const result= await sendRequest('user', {email, password, name}, 'POST');
+    const result = await sendRequest('register', {email, password, name}, 'POST');
         
     return result!.data!.token;
 
@@ -37,11 +37,6 @@ export async function login(email: string, password: string): Promise<{
     solvedPasswords: any;
 }> {
     const result = await sendRequest('login', { email, password }, 'POST');
-    return result!.data;
-}
-
-export async function register(email: string, password: string, name: string) {
-    const result = await sendRequest('register', { email, password, name }, 'POST');
     return result!.data;
 }
 

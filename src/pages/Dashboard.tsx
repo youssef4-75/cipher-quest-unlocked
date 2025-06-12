@@ -78,32 +78,32 @@ const Dashboard = () => {
   };
 
   return (
-    <Layout title="Game Selection">
+    <Layout title="Mission Control" infoText="Welcome to the Cipher Quest mission hub. Here you'll find various targets to hack. Each mission represents a different system to breach, with varying levels of security and complexity.">
       <div className="mb-8 flex flex-wrap gap-3">
         <Button
           onClick={() => setFilter("all")}
           variant={filter === "all" ? "default" : "outline"}>
-          All Games
+          All Systems
         </Button>
         <Button
           onClick={() => setFilter("easy")}
           variant={filter === "easy" ? "default" : "outline"}>
-          Easy
+          Low Security
         </Button>
         <Button
           onClick={() => setFilter("medium")}
           variant={filter === "medium" ? "default" : "outline"}>
-          Medium
+          Medium Security
         </Button>
         <Button
           onClick={() => setFilter("hard")}
           variant={filter === "hard" ? "default" : "outline"}>
-          Hard
+          High Security
         </Button>
         <Button
           onClick={() => setFilter("daily")}
           variant={filter === "daily" ? "default" : "outline"}>
-          Daily Challenges
+          Daily Breaches
         </Button>
       </div>
 
@@ -123,19 +123,19 @@ const Dashboard = () => {
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-3 right-3 bg-card/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
-                  {game.theme}
+                  System Type: {game.theme}
                 </div>
                 <div className="absolute top-10 right-3 bg-card/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
-                  {game.difficulty}
+                  Security Level: {game.difficulty}
                 </div>
                 {game.isDaily && (
                   <div className="absolute top-3 left-3 bg-primary/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
-                    Daily Challenge
+                    Time-Sensitive Target
                   </div>
                 )}
                 {game.preDone && (
                   <div className="absolute top-3 left-3 bg-primary/80 backdrop-blur-sm py-1 px-3 rounded-full text-xs font-medium">
-                    reward already claimed
+                    System Already Breached
                   </div>
                 )}
               </div>
@@ -146,22 +146,22 @@ const Dashboard = () => {
 
                 <div className="grid grid-cols-4 gap-2 mb-4">
                   <div className="text-center p-2 bg-card rounded-md">
-                    <div className="text-xs text-muted-foreground">Energy</div>
+                    <div className="text-xs text-muted-foreground">CPU Load</div>
                     <div className="font-medium flex items-center justify-center">
                       <Zap className="h-3 w-3 text-yellow-400 mr-1" />
                       {game.energyCost}
                     </div>
                   </div>
                   <div className="text-center p-2 bg-card rounded-md">
-                    <div className="text-xs text-muted-foreground">Attempts</div>
+                    <div className="text-xs text-muted-foreground">Max Attempts</div>
                     <div className="font-medium">{game.maxAttempts}</div>
                   </div>
                   <div className="text-center p-2 bg-card rounded-md">
-                    <div className="text-xs text-muted-foreground">Phases</div>
+                    <div className="text-xs text-muted-foreground">Security Layers</div>
                     <div className="font-medium">{game.phases}</div>
                   </div>
                   <div className="text-center p-2 bg-card rounded-md">
-                    <div className="text-xs text-muted-foreground">Time</div>
+                    <div className="text-xs text-muted-foreground">Time Window</div>
                     <div className="font-medium">{game.timed ? game.timeLimit : "∞"}</div>
                   </div>
                 </div>
@@ -171,9 +171,9 @@ const Dashboard = () => {
                   disabled={energy < game.energyCost || !game.playable || loading}
                   onClick={() => handleGameStart(game.id, game.energyCost)}
                 >
-                  {loading ? "Loading..." : 
-                   energy < game.energyCost ? "Not Enough Energy" : 
-                   game.playable ? "Play Now" : "Another game is unfinished"}
+                  {loading ? "Initializing..." : 
+                   energy < game.energyCost ? "Insufficient CPU Power" : 
+                   game.playable ? "Begin Breach" : "Active Mission in Progress"}
                 </Button>
               </div>
             </Card>

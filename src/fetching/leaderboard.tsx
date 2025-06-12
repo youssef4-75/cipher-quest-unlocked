@@ -5,6 +5,7 @@ import { sendRequest } from "./connect";
 
 
 export async function getLeaderboard(filter: 'points' | 'solved'){
+    
     const result= await sendRequest('leaderboard', { filter }, 'GET')
     return result!.data;
 }

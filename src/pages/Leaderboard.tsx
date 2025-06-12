@@ -5,6 +5,36 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context";
 import { getLeaderboard, getOwnRank } from "@/fetching/leaderboard";
 import { useToast } from "@/hooks/use-toast";
+import { Shield, Trophy } from "lucide-react";
+
+const userCard = (id: number, highlight: boolean, index, solved, name, points) =>  {
+    return <Card 
+            key={id} 
+            className={`cipher-card overflow-hidden ${
+              highlight ? "border-cipher-300" : ""
+            }`}
+          >
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 flex items-center justify-center rounded-full bg-card/50 font-bold">
+                    #{index + 1}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{name}</h3>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-mono">
+                      <p>points: <span className="text-cipher-300">{points}</span> </p>
+                      <p>breaches: <span className="text-cipher-300">{solved}</span></p>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+}
+
 
 const Leaderboard = () => {
   const { user } = useAuth();
@@ -39,18 +69,21 @@ const Leaderboard = () => {
   return (
     <Layout title="Leaderboard">
       <div className="max-w-3xl mx-auto">
-        <div className="mb-6 flex flex-wrap gap-3">
+        <div className="flex justify-center gap-4 mb-8">
           <Button
             onClick={() => setFilter('points')}
             variant={filter === 'points' ? 'default' : 'outline'}
           >
-            Sort by Points
+            
+            <Trophy className="h-4 w-4 mr-2" />
+            by Points
           </Button>
           <Button
             onClick={() => setFilter('solved')}
             variant={filter === 'solved' ? 'default' : 'outline'}
           >
-            Sort by Puzzles Solved
+            <Shield className="h-4 w-4 mr-2" />
+            By Breaches
           </Button>
         </div>
 
@@ -58,42 +91,19 @@ const Leaderboard = () => {
           <CardHeader className="bg-card">
             <CardTitle>Global Rankings</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 space-y-4">
             <div className="grid grid-cols-12 py-3 px-4 font-medium border-b border-border text-sm">
               <div className="col-span-1">Rank</div>
               <div className="col-span-5">Player</div>
-              <div className="col-span-3 text-right">Points</div>
-              <div className="col-span-3 text-right">Puzzles Solved</div>
+              <div className="col-span-3 text-right">Known for</div>
             </div>
 
-            {leaderboardData.map((player, index) => {
-              const isCurrentUser = player.id === user?.id;
-
-              return (
-                <div
-                  key={player.id}
-                  className={`grid grid-cols-12 py-3 px-4 border-b border-border ${isCurrentUser ? 'bg-primary/10' : ''}`}
-                >
-                  <div className="col-span-1 font-medium">#{index + 1}</div>
-                  <div className="col-span-5 font-medium">
-                    {player.name}
-                    {isCurrentUser && <span className="ml-2 text-xs text-primary">(You)</span>}
-                  </div>
-                  <div className="col-span-3 text-right">{player.points.toLocaleString()}</div>
-                  <div className="col-span-3 text-right">{player.solved}</div>
-                </div>
-              );
-            })}
+            {leaderboardData.map((player, index) => (
+          userCard(player.id, player.name === user.name, index, player.solved, player.name, player.points)
+        ))}
 
             {ownRankData.rank > 10 && (
-              <div className="grid grid-cols-12 py-3 px-4 bg-primary/10">
-                <div className="col-span-1 font-medium">#{ownRankData.rank}</div>
-                <div className="col-span-5 font-medium">
-                  {user?.name} <span className="ml-2 text-xs text-primary">(You)</span>
-                </div>
-                <div className="col-span-3 text-right">{ownRankData.points.toLocaleString()}</div>
-                <div className="col-span-3 text-right">{ownRankData.solved}</div>
-              </div>
+                userCard(ownRankData.rank, true, ownRankData.rank, ownRankData.solved, user.name, ownRankData.points)
             )}
           </CardContent>
         </Card>

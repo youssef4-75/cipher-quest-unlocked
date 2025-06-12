@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
-import { register } from "@/fetching/app";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -16,7 +15,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { setUser } = useAuth();
+  const { register } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,8 +42,7 @@ const Register = () => {
     setIsSubmitting(true);
     
     try {
-      const userData = await register(email, password, name);
-      setUser(userData);
+      await register(email, password, name);
       toast({
         title: "Welcome to Cipher Quest!",
         description: "Your account has been created successfully.",

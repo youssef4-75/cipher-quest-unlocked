@@ -33,7 +33,7 @@ export async function submitAnswer(token: string, passwordTentative: string, hin
         sim: number
     }
 }> {
-    const result= await sendRequest('submit', { token, passwordTentative, hintText }, 'POST')
+    const result= await sendRequest('submit', { token, passwordTentative, hintText }, 'PUT')
     return result!.data;
     
 }
